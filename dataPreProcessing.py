@@ -230,11 +230,30 @@ def remove_ouliers(data):
         outside_barrier_upper = q3 + 3 * iqr
 
         # Find outliers using the inner and outside barriers
-        mild_outliers = [x for x in data[column_name] if x < inner_barrier_lower or x > inner_barrier_upper and x > outside_barrier_lower and x < outside_barrier_upper]
-        extreme_outliers = [x for x in data[column_name] if x < outside_barrier_lower or x > outside_barrier_upper]
+        mild_outliers = []
+        extreme_outliers = []
+        index = 0
+        for value in data[column_name]:
+            # Find indexes of mild outliers
+            if value < inner_barrier_lower or value > inner_barrier_upper and value > outside_barrier_lower and value < outside_barrier_upper:
+                mild_outliers.append(index)
+            # Find indeces of extreme outliers
+            elif value < outside_barrier_lower or value > outside_barrier_upper:
+                extreme_outliers.append(index)
+            index += 1
 
-        cleaned_data = cleaned_data[~cleaned_data[column_name].isin(mild_outliers + extreme_outliers)]
+        cleaned_data = cleaned_data.drop(mild_outliers + extreme_outliers)
+
+        # Reset the index after removing rows
+        cleaned_data.reset_index(drop=True, inplace=True)
     
     return cleaned_data
 
+# To test before and after
+# fig = px.box(data, y='Revenue')
+# fig.show()
+
 data = remove_ouliers(data)
+
+# fig = px.box(data, y='Revenue')
+# fig.show()
