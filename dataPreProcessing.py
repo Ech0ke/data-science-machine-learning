@@ -1,5 +1,9 @@
 import pandas as pd
+import plotly.express as px
+import numpy as np
 import locale
+import time
+
 
 # Set the locale to use thousands separators
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
@@ -202,3 +206,35 @@ data.drop(rows_to_remove, inplace=True)
 
 # Reset the index after removing rows
 data.reset_index(drop=True, inplace=True)
+
+# Part 5 Outliers
+
+def remove_ouliers(data):
+    data_columns = ["Revenue", "Profit", "Expenses", "Employees", "Growth"]
+    cleaned_data = data.copy()
+    
+    for column_name in data_columns:
+
+        # Calculate the first quartile (Q1) and third quartile (Q3)
+        q1 = np.percentile(data[column_name], 25)
+        q3 = np.percentile(data[column_name], 75)
+        
+        # Calculate the interquartile range (IQR)
+        iqr = q3 - q1
+        
+        # Define the inner and outside barriers
+        inner_barrier_lower = q1 - 1.5 * iqr
+        inner_barrier_upper = q3 + 1.5 * iqr
+        
+        outside_barrier_lower = q1 - 3 * iqr
+        outside_barrier_upper = q3 + 3 * iqr
+
+        # Find outliers using the inner and outside barriers
+        mild_outliers = [x for x in data[column_name] if x < inner_barrier_lower or x > inner_barrier_upper and x > outside_barrier_lower and x < outside_barrier_upper]
+        extreme_outliers = [x for x in data[column_name] if x < outside_barrier_lower or x > outside_barrier_upper]
+
+        cleaned_data = cleaned_data[~cleaned_data[column_name].isin(mild_outliers + extreme_outliers)]
+    
+    return cleaned_data
+
+data = remove_ouliers(data)
