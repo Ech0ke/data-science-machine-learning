@@ -9,54 +9,6 @@ data = pd.read_csv('Future-500-3.csv')
 
 print(data)
 
-# Extract and convert the numeric part of the "Expenses" column
-data['Expenses'] = data['Expenses'].str.replace(
-    ' Dollars', '').str.replace(',', '').astype(float)
-
-# Extract and convert the numeric part of the "Expenses" column
-data['Revenue'] = data['Revenue'].str.replace(
-    '$', '').str.replace(',', '').astype(float)
-
-# Create a list to store the indices of rows to remove
-rows_to_remove = []
-
-# Iterate through each row
-for index, row in data.iterrows():
-    # Check if Expenses is null and Revenue and Profit are not null
-    if pd.isnull(row['Expenses']) and not pd.isnull(row['Revenue']) and not pd.isnull(row['Profit']):
-        # Calculate Expenses based on Revenue and Profit
-        expenses = row['Revenue'] - row['Profit']
-        # Update the 'Expenses' column with the calculated value
-        data.at[index, 'Expenses'] = expenses
-
-    # Check if Revenue is null and Expenses and Profit are not null
-    elif pd.isnull(row['Revenue']) and not pd.isnull(row['Expenses']) and not pd.isnull(row['Profit']):
-        # Calculate Revenue based on Expenses and Profit
-        revenue = row['Profit'] + row['Expenses']
-        # Update the 'Revenue' column with the calculated value
-        data.at[index, 'Revenue'] = revenue
-
-    # Check if Profit is null and Expenses and Revenue are not null
-    elif pd.isnull(row['Profit']) and not pd.isnull(row['Expenses']) and not pd.isnull(row['Revenue']):
-        # Calculate Profit based on Revenue and Expenses
-        profit = row['Revenue'] - row['Expenses']
-        # Update the 'Profit' column with the calculated value
-        data.at[index, 'Profit'] = profit
-
-    # Check if Revenue and Expenses and Profit are null
-    elif pd.isnull(row['Revenue']) and pd.isnull(row['Profit']) and pd.isnull(row['Expenses']):
-        rows_to_remove.append(index)
-
-    # Check if Growth is null
-    if pd.isnull(row['Growth']):
-        rows_to_remove.append(index)
-    
-# Remove the rows outside the loop
-data.drop(rows_to_remove, inplace=True)
-
-# Reset the index after removing rows
-data.reset_index(drop=True, inplace=True)
-
 
 # # Calculate minimum and maximum values for each column
 # min_values = data.min()
@@ -122,6 +74,15 @@ data.reset_index(drop=True, inplace=True)
 # max_profit_formatted = locale.currency(
 #     max_profit, grouping=True, symbol='')
 
+# Extract and convert the numeric part of the "Expenses" column
+data['Expenses'] = data['Expenses'].str.replace(
+    ' Dollars', '').str.replace(',', '').astype(float)
+
+# Extract and convert the numeric part of the "Revenue" column
+data['Revenue'] = data['Revenue'].str.replace(
+    '$', '').str.replace(',', '').astype(float)
+
+# Extract and convert the numeric part of the "Growth" column
 data['Growth'] = data['Growth'].str.replace(
     '%', '').astype(float)
 
@@ -201,3 +162,43 @@ print(data_median)
 print("\nStandard deviation values of columns")
 data_median = data_filtered.std()
 print(data_median.map(lambda x: "{:.2f}".format(x)))
+
+# Create a list to store the indices of rows to remove
+rows_to_remove = []
+
+# Iterate through each row
+for index, row in data.iterrows():
+    # Check if Expenses is null and Revenue and Profit are not null
+    if pd.isnull(row['Expenses']) and not pd.isnull(row['Revenue']) and not pd.isnull(row['Profit']):
+        # Calculate Expenses based on Revenue and Profit
+        expenses = row['Revenue'] - row['Profit']
+        # Update the 'Expenses' column with the calculated value
+        data.at[index, 'Expenses'] = expenses
+
+    # Check if Revenue is null and Expenses and Profit are not null
+    elif pd.isnull(row['Revenue']) and not pd.isnull(row['Expenses']) and not pd.isnull(row['Profit']):
+        # Calculate Revenue based on Expenses and Profit
+        revenue = row['Profit'] + row['Expenses']
+        # Update the 'Revenue' column with the calculated value
+        data.at[index, 'Revenue'] = revenue
+
+    # Check if Profit is null and Expenses and Revenue are not null
+    elif pd.isnull(row['Profit']) and not pd.isnull(row['Expenses']) and not pd.isnull(row['Revenue']):
+        # Calculate Profit based on Revenue and Expenses
+        profit = row['Revenue'] - row['Expenses']
+        # Update the 'Profit' column with the calculated value
+        data.at[index, 'Profit'] = profit
+
+    # Check if Revenue and Expenses and Profit are null
+    elif pd.isnull(row['Revenue']) and pd.isnull(row['Profit']) and pd.isnull(row['Expenses']):
+        rows_to_remove.append(index)
+
+    # Check if Growth is null
+    if pd.isnull(row['Growth']):
+        rows_to_remove.append(index)
+    
+# Remove the rows outside the loop
+data.drop(rows_to_remove, inplace=True)
+
+# Reset the index after removing rows
+data.reset_index(drop=True, inplace=True)
