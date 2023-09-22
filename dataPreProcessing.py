@@ -209,7 +209,7 @@ data.reset_index(drop=True, inplace=True)
 
 # Part 5 Outliers
 
-def remove_ouliers(data):
+def remove_outliers(data):
     data_columns = ["Revenue", "Profit", "Expenses", "Employees", "Growth"]
     cleaned_data = data.copy()
     
@@ -253,7 +253,7 @@ def remove_ouliers(data):
 # fig = px.box(data, y='Revenue')
 # fig.show()
 
-data = remove_ouliers(data)
+no_outliers_data = remove_outliers(data)
 
 # fig = px.box(data, y='Revenue')
 # fig.show()
