@@ -200,7 +200,7 @@ for index, row in data.iterrows():
     # Check if Growth is null
     if pd.isnull(row['Growth']):
         rows_to_remove.append(index)
-    
+
 # Remove the rows outside the loop
 data.drop(rows_to_remove, inplace=True)
 
@@ -209,23 +209,25 @@ data.reset_index(drop=True, inplace=True)
 
 # Part 5 Outliers
 
+
 def remove_outliers(data):
-    data_columns = ["Inception", "Revenue", "Profit", "Expenses", "Employees", "Growth"]
+    data_columns = ["Inception", "Revenue",
+                    "Profit", "Expenses", "Employees", "Growth"]
     cleaned_data = data.copy()
-    
+
     for column_name in data_columns:
 
         # Calculate the first quartile (Q1) and third quartile (Q3)
         q1 = np.percentile(data[column_name], 25)
         q3 = np.percentile(data[column_name], 75)
-        
+
         # Calculate the interquartile range (IQR)
         iqr = q3 - q1
-        
+
         # Define the inner and outside barriers
         inner_barrier_lower = q1 - 1.5 * iqr
         inner_barrier_upper = q3 + 1.5 * iqr
-        
+
         outside_barrier_lower = q1 - 3 * iqr
         outside_barrier_upper = q3 + 3 * iqr
 
@@ -246,12 +248,13 @@ def remove_outliers(data):
 
         # Reset the index after removing rows
         cleaned_data.reset_index(drop=True, inplace=True)
-    
+
     return cleaned_data
 
 # To test before and after
 # fig = px.box(data, y='Revenue')
 # fig.show()
+
 
 no_outliers_data = remove_outliers(data)
 
@@ -265,17 +268,20 @@ normalized_data_min_max = data.copy()
 normalized_data_mean_standardization = data.copy()
 
 # List of columns to normalize (numeric columns)
-numeric_columns = ['Inception', 'Employees', 'Revenue', 'Expenses', 'Profit', 'Growth']
+numeric_columns = ['Inception', 'Employees',
+                   'Revenue', 'Expenses', 'Profit', 'Growth']
 
 # Min-Max normalization for numeric columns
 min_vals = data[numeric_columns].min()
 max_vals = data[numeric_columns].max()
-normalized_data_min_max[numeric_columns] = (data[numeric_columns] - min_vals) / (max_vals - min_vals)
+normalized_data_min_max[numeric_columns] = (
+    data[numeric_columns] - min_vals) / (max_vals - min_vals)
 
 # Mean-Standardization normalization for numeric columns
 mean_vals = data[numeric_columns].mean()
 std_vals = data[numeric_columns].std()
-normalized_data_mean_standardization[numeric_columns] = (data[numeric_columns] - mean_vals) / std_vals
+normalized_data_mean_standardization[numeric_columns] = (
+    data[numeric_columns] - mean_vals) / std_vals
 
 # Print the normalized data
 print("Original Data:")
@@ -285,3 +291,7 @@ print("\nNormalized Data Min-Max:")
 print(normalized_data_min_max)
 print("\nNormalized Data Mean-Standardization:")
 print(normalized_data_mean_standardization)
+
+correlation_matrix = data_filtered.corr()
+
+print(correlation_matrix)
