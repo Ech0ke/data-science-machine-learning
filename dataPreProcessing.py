@@ -1,5 +1,9 @@
 import pandas as pd
+import plotly.express as px
+import numpy as np
 import locale
+import time
+
 
 # Set the locale to use thousands separators
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
@@ -202,3 +206,54 @@ data.drop(rows_to_remove, inplace=True)
 
 # Reset the index after removing rows
 data.reset_index(drop=True, inplace=True)
+
+# Part 5 Outliers
+
+def remove_outliers(data):
+    data_columns = ["Revenue", "Profit", "Expenses", "Employees", "Growth"]
+    cleaned_data = data.copy()
+    
+    for column_name in data_columns:
+
+        # Calculate the first quartile (Q1) and third quartile (Q3)
+        q1 = np.percentile(data[column_name], 25)
+        q3 = np.percentile(data[column_name], 75)
+        
+        # Calculate the interquartile range (IQR)
+        iqr = q3 - q1
+        
+        # Define the inner and outside barriers
+        inner_barrier_lower = q1 - 1.5 * iqr
+        inner_barrier_upper = q3 + 1.5 * iqr
+        
+        outside_barrier_lower = q1 - 3 * iqr
+        outside_barrier_upper = q3 + 3 * iqr
+
+        # Find outliers using the inner and outside barriers
+        mild_outliers = []
+        extreme_outliers = []
+        index = 0
+        for value in data[column_name]:
+            # Find indexes of mild outliers
+            if value < inner_barrier_lower or value > inner_barrier_upper and value > outside_barrier_lower and value < outside_barrier_upper:
+                mild_outliers.append(index)
+            # Find indeces of extreme outliers
+            elif value < outside_barrier_lower or value > outside_barrier_upper:
+                extreme_outliers.append(index)
+            index += 1
+
+        cleaned_data = cleaned_data.drop(mild_outliers + extreme_outliers)
+
+        # Reset the index after removing rows
+        cleaned_data.reset_index(drop=True, inplace=True)
+    
+    return cleaned_data
+
+# To test before and after
+# fig = px.box(data, y='Revenue')
+# fig.show()
+
+no_outliers_data = remove_outliers(data)
+
+# fig = px.box(data, y='Revenue')
+# fig.show()
