@@ -210,7 +210,7 @@ data.reset_index(drop=True, inplace=True)
 # Part 5 Outliers
 
 def remove_outliers(data):
-    data_columns = ["Revenue", "Profit", "Expenses", "Employees", "Growth"]
+    data_columns = ["Inception", "Revenue", "Profit", "Expenses", "Employees", "Growth"]
     cleaned_data = data.copy()
     
     for column_name in data_columns:
@@ -257,3 +257,31 @@ no_outliers_data = remove_outliers(data)
 
 # fig = px.box(data, y='Revenue')
 # fig.show()
+
+# Part 6 Normalization
+
+# Create a copy of the original DataFrame
+normalized_data_min_max = data.copy()
+normalized_data_mean_standardization = data.copy()
+
+# List of columns to normalize (numeric columns)
+numeric_columns = ['Inception', 'Employees', 'Revenue', 'Expenses', 'Profit', 'Growth']
+
+# Min-Max normalization for numeric columns
+min_vals = data[numeric_columns].min()
+max_vals = data[numeric_columns].max()
+normalized_data_min_max[numeric_columns] = (data[numeric_columns] - min_vals) / (max_vals - min_vals)
+
+# Mean-Standardization normalization for numeric columns
+mean_vals = data[numeric_columns].mean()
+std_vals = data[numeric_columns].std()
+normalized_data_mean_standardization[numeric_columns] = (data[numeric_columns] - mean_vals) / std_vals
+
+# Print the normalized data
+print("Original Data:")
+print(data)
+
+print("\nNormalized Data Min-Max:")
+print(normalized_data_min_max)
+print("\nNormalized Data Mean-Standardization:")
+print(normalized_data_mean_standardization)
