@@ -297,23 +297,6 @@ correlation_matrix = data_filtered.corr()
 
 print(correlation_matrix)
 
-# # Create a heatmap
-# plt.imshow(correlation_matrix, cmap='RdYlBu', vmin=-1, vmax=1)
-
-# # Add a colorbar
-# cbar = plt.colorbar()
-# cbar.set_label('Correlation')
-
-# # Set ticks and labels
-# plt.xticks(np.arange(len(correlation_matrix.columns)),
-#            correlation_matrix.columns, rotation=45)
-# plt.yticks(np.arange(len(correlation_matrix.columns)),
-#            correlation_matrix.columns)
-
-# # Display the plot
-# plt.title("Correlation Matrix")
-# plt.show()
-
 # Create a heatmap
 plt.imshow(correlation_matrix, cmap='RdYlBu', vmin=-1, vmax=1)
 
