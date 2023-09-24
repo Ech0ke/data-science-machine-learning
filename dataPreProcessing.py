@@ -3,6 +3,7 @@ import plotly.express as px
 import numpy as np
 import locale
 import time
+import matplotlib.pyplot as plt
 
 
 # Set the locale to use thousands separators
@@ -295,3 +296,44 @@ print(normalized_data_mean_standardization)
 correlation_matrix = data_filtered.corr()
 
 print(correlation_matrix)
+
+# # Create a heatmap
+# plt.imshow(correlation_matrix, cmap='RdYlBu', vmin=-1, vmax=1)
+
+# # Add a colorbar
+# cbar = plt.colorbar()
+# cbar.set_label('Correlation')
+
+# # Set ticks and labels
+# plt.xticks(np.arange(len(correlation_matrix.columns)),
+#            correlation_matrix.columns, rotation=45)
+# plt.yticks(np.arange(len(correlation_matrix.columns)),
+#            correlation_matrix.columns)
+
+# # Display the plot
+# plt.title("Correlation Matrix")
+# plt.show()
+
+# Create a heatmap
+plt.imshow(correlation_matrix, cmap='RdYlBu', vmin=-1, vmax=1)
+
+# Add a colorbar
+cbar = plt.colorbar()
+cbar.set_label('Correlation')
+
+# Set ticks and labels
+ticks = np.arange(len(correlation_matrix.columns))
+plt.xticks(ticks, correlation_matrix.columns, rotation=45)
+plt.yticks(ticks, correlation_matrix.columns)
+
+# Add correlation values to the heatmap
+for i in range(len(correlation_matrix.columns)):
+    for j in range(len(correlation_matrix.columns)):
+        if i == j:
+            continue
+        plt.text(j, i, f'{correlation_matrix.iloc[i, j]:.2f}',
+                 ha='center', va='center', color='#303030', fontsize=8)
+
+# Display the plot
+plt.title("Correlation Matrix")
+plt.show()
