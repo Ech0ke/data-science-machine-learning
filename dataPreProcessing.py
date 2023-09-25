@@ -221,7 +221,7 @@ plt.show()
 # Average growth by industry
 print('\nAverage growth by industry')
 
-average_growth_by_industry = no_outliers_data.groupby('Industry')['Growth'].mean().reset_index()
+average_growth_by_industry = data.groupby('Industry')['Growth'].mean().reset_index()
 print(average_growth_by_industry)
 
 data_set = []; data_labels = []
@@ -243,11 +243,11 @@ plt.show()
 # Revenue and Profit graph
 revenue_data_by_industry = []
 for x in data_labels:
-    revenue_data_by_industry.append(list(no_outliers_data.loc[no_outliers_data['Industry'] == x, 'Revenue']))
+    revenue_data_by_industry.append(list(data.loc[data['Industry'] == x, 'Revenue']))
 
 profit_data_by_industry = []
 for x in data_labels:
-    profit_data_by_industry.append(list(no_outliers_data.loc[no_outliers_data['Industry'] == x, 'Profit']))
+    profit_data_by_industry.append(list(data.loc[data['Industry'] == x, 'Profit']))
 
 for x in revenue_data_by_industry:
     i = revenue_data_by_industry.index(x)
