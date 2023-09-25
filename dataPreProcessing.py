@@ -224,19 +224,21 @@ print('\nAverage growth by industry')
 average_growth_by_industry = data.groupby('Industry')['Growth'].mean().reset_index()
 print(average_growth_by_industry)
 
+colors = ['lightblue', 'lightgreen', 'red', 'purple', 'orange', 'yellow', 'brown']
 data_set = []; data_labels = []
 for x in average_growth_by_industry['Industry']:
     i = average_growth_by_industry['Industry'].to_list().index(x)
     data_labels.append(x)
     data_set.append([i, average_growth_by_industry['Growth'].to_list()[i]])
 
-plt.figure(figsize=(8, 6))
-plt.boxplot(data_set)
-plt.xlabel('Industry')
-plt.ylabel('Growth (%)')
-plt.xticks([1, 2, 3, 4, 5, 6, 7], data_labels, rotation=45)
-plt.title('Boxplot of average Growth by Industry')
-plt.grid(True)
+fig, ax = plt.subplots()
+bplot = ax.boxplot(data_set, patch_artist=True, medianprops={"color": "black", "linewidth": 2})
+for patch, color in zip(bplot['boxes'], colors):
+    patch.set_facecolor(color)
+ax.set_xlabel('Industry')
+ax.set_ylabel('Growth (%)')
+ax.set_xticks([1, 2, 3, 4, 5, 6, 7], data_labels, rotation=45)
+ax.set_title('Boxplot of average Growth by Industry')
 plt.show()
 
 
@@ -279,7 +281,7 @@ for x in data_labels:
     employees_counts.append(sum(list(data_copy.loc[data_copy['Industry'] == x, 'Employees'])))
 
 fig, ax = plt.subplots()
-bar_container = ax.bar(data_labels, employees_counts)
+bar_container = ax.bar(data_labels, employees_counts, color=colors)
 plt.xticks(rotation=45, ha='right')
 ax.bar_label(bar_container, fmt='{:,.0f}')
 ax.set_ylabel('Number of employees')
@@ -288,7 +290,7 @@ ax.set_title('The number of employees by industry')
 plt.show()
 
 
-# Revenue by industry
+# Average Revenue by industry
 print('\nAverage Revenue by industry')
 average_revenue_by_industry = data.groupby('Industry')['Revenue'].mean().reset_index()
 print(average_revenue_by_industry)
@@ -299,10 +301,34 @@ for x in data_labels:
     data_set.append(average_revenue_by_industry['Revenue'].to_list()[i])
 
 fig, ax = plt.subplots()
-bar_container = ax.bar(data_labels, data_set)
+bar_container = ax.bar(data_labels, data_set, color=colors)
 plt.xticks(rotation=45, ha='right')
 ax.bar_label(bar_container, fmt='{:,.0f}')
 ax.set_ylabel('Revenue ($)')
 ax.set_xlabel('Industry')
-ax.set_title('Revenue by industry')
+ax.set_title('Average Revenue by Industry')
+plt.show()
+
+
+# Expenses by every state of USA
+data_copy = data.copy()
+rows_to_remove = []
+for index, row in data.iterrows():
+    if pd.isnull(row['State']):
+        rows_to_remove.append(index)
+
+data_copy.drop(rows_to_remove, inplace=True)
+data_copy.reset_index(drop=True, inplace=True)
+
+states = list(set(data_copy['State'])); expenses = []
+for x in states:
+    expenses.append(sum(list(data_copy.loc[data_copy['State'] == x, 'Expenses'])))
+
+fig, ax = plt.subplots()
+bar_container = ax.bar(states, expenses, color=colors)
+ax.set_xticks(states)
+ax.bar_label(bar_container, fmt='{:,.0f}')
+ax.set_ylabel('Revenue (in 100 milions)')
+ax.set_xlabel('States')
+ax.set_title('Revenue by states of USA')
 plt.show()
