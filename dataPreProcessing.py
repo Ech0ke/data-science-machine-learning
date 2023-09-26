@@ -27,7 +27,7 @@ data['Growth'] = data['Growth'].str.replace(
 
 # Assuming 'data' is your DataFrame
 columns_to_exclude = ['ID', 'Name', 'State', 'City',
-                    'Industry']  # List of columns to exclude
+                      'Industry']  # List of columns to exclude
 
 # Drop the specified columns from the DataFrame
 data_filtered = data.drop(columns=columns_to_exclude)
@@ -164,7 +164,7 @@ normalized_data_mean_standardization = data.copy()
 
 # List of columns to normalize (numeric columns)
 numeric_columns = ['Inception', 'Employees',
-                    'Revenue', 'Expenses', 'Profit', 'Growth']
+                   'Revenue', 'Expenses', 'Profit', 'Growth']
 
 # Min-Max normalization for numeric columns
 min_vals = data[numeric_columns].min()
@@ -187,8 +187,9 @@ print(normalized_data_min_max)
 print("\nNormalized Data Mean-Standardization:")
 print(normalized_data_mean_standardization)
 
+# Part 8 Correlation Matrix
 correlation_matrix = data_filtered.corr()
-
+print("Correlation matrix of each numerable field:")
 print(correlation_matrix)
 
 # Create a heatmap
@@ -209,7 +210,7 @@ for i in range(len(correlation_matrix.columns)):
         if i == j:
             continue
         plt.text(j, i, f'{correlation_matrix.iloc[i, j]:.2f}',
-                ha='center', va='center', color='#303030', fontsize=8)
+                 ha='center', va='center', color='#303030', fontsize=8)
 
 # Display the plot
 plt.title("Correlation Matrix")
@@ -221,18 +222,22 @@ plt.show()
 # Average growth by industry
 print('\nAverage growth by industry')
 
-average_growth_by_industry = data.groupby('Industry')['Growth'].mean().reset_index()
+average_growth_by_industry = data.groupby(
+    'Industry')['Growth'].mean().reset_index()
 print(average_growth_by_industry)
 
-colors = ['lightblue', 'lightgreen', 'red', 'purple', 'orange', 'yellow', 'brown']
-data_set = []; data_labels = []
+colors = ['lightblue', 'lightgreen', 'red',
+          'purple', 'orange', 'yellow', 'brown']
+data_set = []
+data_labels = []
 for x in average_growth_by_industry['Industry']:
     i = average_growth_by_industry['Industry'].to_list().index(x)
     data_labels.append(x)
     data_set.append([i, average_growth_by_industry['Growth'].to_list()[i]])
 
 fig, ax = plt.subplots()
-bplot = ax.boxplot(data_set, patch_artist=True, medianprops={"color": "black", "linewidth": 2})
+bplot = ax.boxplot(data_set, patch_artist=True, medianprops={
+                   "color": "black", "linewidth": 2})
 for patch, color in zip(bplot['boxes'], colors):
     patch.set_facecolor(color)
 ax.set_xlabel('Industry')
@@ -245,11 +250,13 @@ plt.show()
 # Revenue and Profit graph
 revenue_data_by_industry = []
 for x in data_labels:
-    revenue_data_by_industry.append(list(data.loc[data['Industry'] == x, 'Revenue']))
+    revenue_data_by_industry.append(
+        list(data.loc[data['Industry'] == x, 'Revenue']))
 
 profit_data_by_industry = []
 for x in data_labels:
-    profit_data_by_industry.append(list(data.loc[data['Industry'] == x, 'Profit']))
+    profit_data_by_industry.append(
+        list(data.loc[data['Industry'] == x, 'Profit']))
 
 for x in revenue_data_by_industry:
     i = revenue_data_by_industry.index(x)
@@ -258,7 +265,8 @@ for x in revenue_data_by_industry:
 plt.legend(labels=data_labels)
 for x in revenue_data_by_industry:
     i = revenue_data_by_industry.index(x)
-    plt.plot([sorted(x)[0], sorted(x)[-1]], [sorted(profit_data_by_industry[i])[0], sorted(profit_data_by_industry[i])[-1]], marker='o', linewidth=2.5)
+    plt.plot([sorted(x)[0], sorted(x)[-1]], [sorted(profit_data_by_industry[i])
+             [0], sorted(profit_data_by_industry[i])[-1]], marker='o', linewidth=2.5)
 
 plt.xlabel('Revenue')
 plt.ylabel('Profit')
@@ -278,7 +286,8 @@ data_copy.drop(rows_to_remove, inplace=True)
 data_copy.reset_index(drop=True, inplace=True)
 
 for x in data_labels:
-    employees_counts.append(sum(list(data_copy.loc[data_copy['Industry'] == x, 'Employees'])))
+    employees_counts.append(
+        sum(list(data_copy.loc[data_copy['Industry'] == x, 'Employees'])))
 
 fig, ax = plt.subplots()
 bar_container = ax.bar(data_labels, employees_counts, color=colors)
@@ -292,7 +301,8 @@ plt.show()
 
 # Average Revenue by industry
 print('\nAverage Revenue by industry')
-average_revenue_by_industry = data.groupby('Industry')['Revenue'].mean().reset_index()
+average_revenue_by_industry = data.groupby(
+    'Industry')['Revenue'].mean().reset_index()
 print(average_revenue_by_industry)
 
 data_set = []
@@ -320,9 +330,11 @@ for index, row in data.iterrows():
 data_copy.drop(rows_to_remove, inplace=True)
 data_copy.reset_index(drop=True, inplace=True)
 
-states = list(set(data_copy['State'])); expenses = []
+states = list(set(data_copy['State']))
+expenses = []
 for x in states:
-    expenses.append(sum(list(data_copy.loc[data_copy['State'] == x, 'Expenses'])))
+    expenses.append(
+        sum(list(data_copy.loc[data_copy['State'] == x, 'Expenses'])))
 
 fig, ax = plt.subplots()
 bar_container = ax.bar(states, expenses, color=colors)
