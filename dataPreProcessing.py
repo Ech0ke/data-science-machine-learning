@@ -2,7 +2,7 @@ import pandas as pd
 import plotly.express as px
 import numpy as np
 import locale
-import time
+import matplotlib.pyplot as plt
 
 
 # Set the locale to use thousands separators
@@ -12,71 +12,6 @@ locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 data = pd.read_csv('Future-500-3.csv')
 
 print(data)
-
-
-# # Calculate minimum and maximum values for each column
-# min_values = data.min()
-# max_values = data.max()
-
-# # Display the results
-# print("Minimum values:")
-# print(min_values)
-
-# print("\nMaximum values:")
-# print(max_values)
-
-# print(max_values.dtype)
-
-# min_id = data['ID'].min()
-# max_id = data['ID'].max()
-
-# min_name = data['Name'].min()
-# max_name = data['Name'].max()
-
-
-# TODO: fix data type
-# min_industry = data['Industry'].min()
-# max_industry = data['Industry'].max()
-
-# min_inception = data['Inception'].min()
-# max_inception = data['Inception'].max()
-
-# min_employees = data['Employees'].min()
-# max_employees = data['Employees'].max()
-
-# TODO: fix data type
-# min_state = data['State'].min()
-# max_state = data['State'].max()
-
-# TODO: fix data type
-# min_city = data['City'].min()
-# max_city = data['City'].max()
-
-# min_revenue = data['Revenue'].min()
-# max_revenue = data['Revenue'].max()
-
-# min_revenue_formatted = locale.currency(
-#     min_revenue, grouping=True, symbol='')
-# max_revenue_formatted = locale.currency(
-#     max_revenue, grouping=True, symbol='')
-
-# Calculate the minimum and maximum values
-# min_expenses = data['Expenses'].min()
-# max_expenses = data['Expenses'].max()
-
-# Format the results with commas for thousands and periods for fractions
-# min_expenses_formatted = locale.currency(
-#     min_expenses, grouping=True, symbol='')
-# max_expenses_formatted = locale.currency(
-#     max_expenses, grouping=True, symbol='')
-
-# min_profit = data['Profit'].min()
-# max_profit = data['Profit'].max()
-
-# min_profit_formatted = locale.currency(
-#     min_profit, grouping=True, symbol='')
-# max_profit_formatted = locale.currency(
-#     max_profit, grouping=True, symbol='')
 
 # Extract and convert the numeric part of the "Expenses" column
 data['Expenses'] = data['Expenses'].str.replace(
@@ -90,49 +25,9 @@ data['Revenue'] = data['Revenue'].str.replace(
 data['Growth'] = data['Growth'].str.replace(
     '%', '').astype(float)
 
-# min_growth = data['Growth'].min()
-# max_growth = data['Growth'].max()
-
-# Display the formatted results
-
-# print(f"Minimum ID: {min_id}")
-# print(f"Maximum ID: {max_id}\n")
-
-# print(f"Minimum name by alphabet: {min_name}")
-# print(f"Maximum name by alphabet: {max_name}\n")
-
-# print(f"Minimum industry by alphabet: {min_industry}")
-# print(f"Maximum industry by alphabet: {max_industry}")
-
-# print(f"Minimum inception date: {min_inception}")
-# print(f"Maximum inception date: {max_inception}\n")
-
-# print(f"Minimum no. of employees: {min_employees:.0f}")
-# print(f"Maximum no. of employees: {max_employees:.0f}\n")
-
-# print(f"Minimum state by alphabet: {min_state}")
-# print(f"Maximum state by alphabet: {max_state}\n")
-
-
-# print(f"Minimum city by alphabet: {min_city}")
-# print(f"Maximum city by alphabet: {max_city}\n")
-
-
-# print(f"Minimum Revenue: ${min_revenue_formatted}")
-# print(f"Maximum Expenses: ${max_revenue_formatted}\n")
-
-# print(f"Minimum Expenses: {min_expenses_formatted} Dollars")
-# print(f"Maximum Expenses: {max_expenses_formatted} Dollars\n")
-
-# print(f"Minimum Profit: {min_profit_formatted}")
-# print(f"Maximum Profit: {max_profit_formatted}\n")
-
-# print(f"Minimum growth: {min_growth}")
-# print(f"Maximum growth: {max_profit}\n")
-
 # Assuming 'data' is your DataFrame
 columns_to_exclude = ['ID', 'Name', 'State', 'City',
-                      'Industry']  # List of columns to exclude
+                    'Industry']  # List of columns to exclude
 
 # Drop the specified columns from the DataFrame
 data_filtered = data.drop(columns=columns_to_exclude)
@@ -200,7 +95,7 @@ for index, row in data.iterrows():
     # Check if Growth is null
     if pd.isnull(row['Growth']):
         rows_to_remove.append(index)
-    
+
 # Remove the rows outside the loop
 data.drop(rows_to_remove, inplace=True)
 
@@ -209,23 +104,25 @@ data.reset_index(drop=True, inplace=True)
 
 # Part 5 Outliers
 
+
 def remove_outliers(data):
-    data_columns = ["Revenue", "Profit", "Expenses", "Employees", "Growth"]
+    data_columns = ["Inception", "Revenue",
+                    "Profit", "Expenses", "Employees", "Growth"]
     cleaned_data = data.copy()
-    
+
     for column_name in data_columns:
 
         # Calculate the first quartile (Q1) and third quartile (Q3)
         q1 = np.percentile(data[column_name], 25)
         q3 = np.percentile(data[column_name], 75)
-        
+
         # Calculate the interquartile range (IQR)
         iqr = q3 - q1
-        
+
         # Define the inner and outside barriers
         inner_barrier_lower = q1 - 1.5 * iqr
         inner_barrier_upper = q3 + 1.5 * iqr
-        
+
         outside_barrier_lower = q1 - 3 * iqr
         outside_barrier_upper = q3 + 3 * iqr
 
@@ -246,14 +143,192 @@ def remove_outliers(data):
 
         # Reset the index after removing rows
         cleaned_data.reset_index(drop=True, inplace=True)
-    
+
     return cleaned_data
 
 # To test before and after
 # fig = px.box(data, y='Revenue')
 # fig.show()
 
+
 no_outliers_data = remove_outliers(data)
 
 # fig = px.box(data, y='Revenue')
 # fig.show()
+
+# Part 6 Normalization
+
+# Create a copy of the original DataFrame
+normalized_data_min_max = data.copy()
+normalized_data_mean_standardization = data.copy()
+
+# List of columns to normalize (numeric columns)
+numeric_columns = ['Inception', 'Employees',
+                    'Revenue', 'Expenses', 'Profit', 'Growth']
+
+# Min-Max normalization for numeric columns
+min_vals = data[numeric_columns].min()
+max_vals = data[numeric_columns].max()
+normalized_data_min_max[numeric_columns] = (
+    data[numeric_columns] - min_vals) / (max_vals - min_vals)
+
+# Mean-Standardization normalization for numeric columns
+mean_vals = data[numeric_columns].mean()
+std_vals = data[numeric_columns].std()
+normalized_data_mean_standardization[numeric_columns] = (
+    data[numeric_columns] - mean_vals) / std_vals
+
+# Print the normalized data
+print("Original Data:")
+print(data)
+
+print("\nNormalized Data Min-Max:")
+print(normalized_data_min_max)
+print("\nNormalized Data Mean-Standardization:")
+print(normalized_data_mean_standardization)
+
+correlation_matrix = data_filtered.corr()
+
+print(correlation_matrix)
+
+# Create a heatmap
+plt.imshow(correlation_matrix, cmap='RdYlBu', vmin=-1, vmax=1)
+
+# Add a colorbar
+cbar = plt.colorbar()
+cbar.set_label('Correlation')
+
+# Set ticks and labels
+ticks = np.arange(len(correlation_matrix.columns))
+plt.xticks(ticks, correlation_matrix.columns, rotation=45)
+plt.yticks(ticks, correlation_matrix.columns)
+
+# Add correlation values to the heatmap
+for i in range(len(correlation_matrix.columns)):
+    for j in range(len(correlation_matrix.columns)):
+        if i == j:
+            continue
+        plt.text(j, i, f'{correlation_matrix.iloc[i, j]:.2f}',
+                ha='center', va='center', color='#303030', fontsize=8)
+
+# Display the plot
+plt.title("Correlation Matrix")
+plt.show()
+
+
+# Part 7 Visual Graphics
+
+# Average growth by industry
+print('\nAverage growth by industry')
+
+average_growth_by_industry = data.groupby('Industry')['Growth'].mean().reset_index()
+print(average_growth_by_industry)
+
+colors = ['lightblue', 'lightgreen', 'red', 'purple', 'orange', 'yellow', 'brown']
+data_set = []; data_labels = []
+for x in average_growth_by_industry['Industry']:
+    i = average_growth_by_industry['Industry'].to_list().index(x)
+    data_labels.append(x)
+    data_set.append([i, average_growth_by_industry['Growth'].to_list()[i]])
+
+fig, ax = plt.subplots()
+bplot = ax.boxplot(data_set, patch_artist=True, medianprops={"color": "black", "linewidth": 2})
+for patch, color in zip(bplot['boxes'], colors):
+    patch.set_facecolor(color)
+ax.set_xlabel('Industry')
+ax.set_ylabel('Growth (%)')
+ax.set_xticks([1, 2, 3, 4, 5, 6, 7], data_labels, rotation=45)
+ax.set_title('Boxplot of average Growth by Industry')
+plt.show()
+
+
+# Revenue and Profit graph
+revenue_data_by_industry = []
+for x in data_labels:
+    revenue_data_by_industry.append(list(data.loc[data['Industry'] == x, 'Revenue']))
+
+profit_data_by_industry = []
+for x in data_labels:
+    profit_data_by_industry.append(list(data.loc[data['Industry'] == x, 'Profit']))
+
+for x in revenue_data_by_industry:
+    i = revenue_data_by_industry.index(x)
+    plt.scatter(x, profit_data_by_industry[i])
+
+plt.legend(labels=data_labels)
+for x in revenue_data_by_industry:
+    i = revenue_data_by_industry.index(x)
+    plt.plot([sorted(x)[0], sorted(x)[-1]], [sorted(profit_data_by_industry[i])[0], sorted(profit_data_by_industry[i])[-1]], marker='o', linewidth=2.5)
+
+plt.xlabel('Revenue')
+plt.ylabel('Profit')
+plt.title('Revenue and Profit graph by Industry')
+plt.show()
+
+
+# The number of employees by industry
+employees_counts = []
+data_copy = data.copy()
+rows_to_remove = []
+for index, row in data.iterrows():
+    if pd.isnull(row['Employees']):
+        rows_to_remove.append(index)
+
+data_copy.drop(rows_to_remove, inplace=True)
+data_copy.reset_index(drop=True, inplace=True)
+
+for x in data_labels:
+    employees_counts.append(sum(list(data_copy.loc[data_copy['Industry'] == x, 'Employees'])))
+
+fig, ax = plt.subplots()
+bar_container = ax.bar(data_labels, employees_counts, color=colors)
+plt.xticks(rotation=45, ha='right')
+ax.bar_label(bar_container, fmt='{:,.0f}')
+ax.set_ylabel('Number of employees')
+ax.set_xlabel('Industry')
+ax.set_title('The number of employees by industry')
+plt.show()
+
+
+# Average Revenue by industry
+print('\nAverage Revenue by industry')
+average_revenue_by_industry = data.groupby('Industry')['Revenue'].mean().reset_index()
+print(average_revenue_by_industry)
+
+data_set = []
+for x in data_labels:
+    i = data_labels.index(x)
+    data_set.append(average_revenue_by_industry['Revenue'].to_list()[i])
+
+fig, ax = plt.subplots()
+bar_container = ax.bar(data_labels, data_set, color=colors)
+plt.xticks(rotation=45, ha='right')
+ax.bar_label(bar_container, fmt='{:,.0f}')
+ax.set_ylabel('Revenue ($)')
+ax.set_xlabel('Industry')
+ax.set_title('Average Revenue by Industry')
+plt.show()
+
+
+# Expenses by every state of USA
+data_copy = data.copy()
+rows_to_remove = []
+for index, row in data.iterrows():
+    if pd.isnull(row['State']):
+        rows_to_remove.append(index)
+
+data_copy.drop(rows_to_remove, inplace=True)
+data_copy.reset_index(drop=True, inplace=True)
+
+states = list(set(data_copy['State'])); expenses = []
+for x in states:
+    expenses.append(sum(list(data_copy.loc[data_copy['State'] == x, 'Expenses'])))
+
+fig, ax = plt.subplots()
+bar_container = ax.bar(states, expenses, color=colors)
+ax.set_xticks(states)
+ax.bar_label(bar_container, fmt='{:,.0f}')
+ax.set_ylabel('Revenue (in 100 milions)')
+ax.set_xlabel('States')
+ax.set_title('Revenue by states of USA')
+plt.show()
