@@ -224,10 +224,53 @@ print(normalized_data_min_max)
 print("\nNormalized Data Mean-Standardization:")
 print(normalized_data_mean_standardization)
 
+# Part 6 visualization 
+# Select the specific column ('Revenue') for plotting
+column_to_plot = 'Revenue'
+
+# Extract the data for the selected column in all three versions
+original_data_column = data[column_to_plot]
+min_max_normalized_column = normalized_data_min_max[column_to_plot]
+mean_standardized_column = normalized_data_mean_standardization[column_to_plot]
+
+# Limit the number of values to 50
+original_data_column = original_data_column.head(150)
+min_max_normalized_column = min_max_normalized_column.head(150)
+mean_standardized_column = mean_standardized_column.head(150)
+
+# Create three separate bar charts
+plt.figure(figsize=(15, 5))
+
+# Original Data
+plt.subplot(1, 3, 1)
+plt.bar(range(len(original_data_column)), original_data_column)
+plt.title(f'{column_to_plot} (Original)')
+plt.xlabel('Index')
+plt.ylabel('Value')
+
+# Min-Max Normalized Data
+plt.subplot(1, 3, 2)
+plt.bar(range(len(min_max_normalized_column)), min_max_normalized_column)
+plt.title(f'{column_to_plot} (Min-Max Normalized)')
+plt.xlabel('Index')
+plt.ylabel('Value')
+
+# Mean-Standardization Normalized Data
+plt.subplot(1, 3, 3)
+plt.bar(range(len(mean_standardized_column)), mean_standardized_column)
+plt.title(f'{column_to_plot} (Mean-Standardization Normalized)')
+plt.xlabel('Index')
+plt.ylabel('Value')
+
+plt.tight_layout()
+plt.show()
+
+
 # Part 8 Correlation Matrix
 correlation_matrix = data_filtered.corr()
 print("Correlation matrix of each numerable field:")
 print(correlation_matrix)
+
 
 # Create a heatmap
 plt.imshow(correlation_matrix, cmap='RdYlBu', vmin=-1, vmax=1)
