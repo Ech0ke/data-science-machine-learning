@@ -65,10 +65,13 @@ print(data_median.map(lambda x: "{:.2f}".format(x)))
 # Group the data by the 'Industry' column
 data_grouped_by_industry = data.groupby('Industry')
 
+# Set the display format for float values
+pd.options.display.float_format = '{:.2f}'.format
+
 # Iterate through each group (industry) and calculate summary statistics
 for industry, group_data in data_grouped_by_industry:
 
-    # Initialize an empty DataFrame to store the summary statistics for industry being looped through
+    # Initialize an empty DataFrame to store the summary statistics for the current industry
     industry_summary = pd.DataFrame()
 
     # Calculate summary statistics for the current industry
@@ -83,7 +86,10 @@ for industry, group_data in data_grouped_by_industry:
     # Reset the index of the result DataFrame
     industry_summary.reset_index(inplace=True)
 
-    print(f"{industry_summary}\n\n")
+    # Print the summary statistics for the current industry
+    print(f"Industry: {industry}")
+    print(industry_summary)
+    print("\n")
 
 
 # Create a list to store the indices of rows to remove
