@@ -277,10 +277,10 @@ bplot = ax.boxplot(data_set, patch_artist=True, medianprops={
                    "color": "black", "linewidth": 2})
 for patch, color in zip(bplot['boxes'], colors):
     patch.set_facecolor(color)
-ax.set_xlabel('Industry')
-ax.set_ylabel('Growth (%)')
+ax.set_xlabel('Industrijos')
+ax.set_ylabel('Augimas (%)')
 ax.set_xticks([1, 2, 3, 4, 5, 6, 7], data_labels, rotation=45)
-ax.set_title('Boxplot of average Growth by Industry')
+ax.set_title('Industrijų augimo procento diagrama')
 plt.show()
 
 
@@ -305,9 +305,9 @@ for x in revenue_data_by_industry:
     plt.plot([sorted(x)[0], sorted(x)[-1]], [sorted(profit_data_by_industry[i])
              [0], sorted(profit_data_by_industry[i])[-1]], marker='o', linewidth=2.5)
 
-plt.xlabel('Revenue')
-plt.ylabel('Profit')
-plt.title('Revenue and Profit graph by Industry')
+plt.xlabel('Pajamos')
+plt.ylabel('Pelnas')
+plt.title('Pajamų ir pelno priklausomybės industrijai grafikas')
 plt.show()
 
 
@@ -330,9 +330,9 @@ fig, ax = plt.subplots()
 bar_container = ax.bar(data_labels, employees_counts, color=colors)
 plt.xticks(rotation=45, ha='right')
 ax.bar_label(bar_container, fmt='{:,.0f}')
-ax.set_ylabel('Number of employees')
-ax.set_xlabel('Industry')
-ax.set_title('The number of employees by industry')
+ax.set_ylabel('Darbuotojų skaičius')
+ax.set_xlabel('Industrijos')
+ax.set_title('Darbuotojų skaičiaus dirbančių industrijoje diagrama')
 plt.show()
 
 
@@ -351,9 +351,9 @@ fig, ax = plt.subplots()
 bar_container = ax.bar(data_labels, data_set, color=colors)
 plt.xticks(rotation=45, ha='right')
 ax.bar_label(bar_container, fmt='{:,.0f}')
-ax.set_ylabel('Revenue ($)')
-ax.set_xlabel('Industry')
-ax.set_title('Average Revenue by Industry')
+ax.set_ylabel('Pajamos ($)')
+ax.set_xlabel('Industrijos')
+ax.set_title('Vidutinių pajamų industrijai grafikas')
 plt.show()
 
 
@@ -377,7 +377,7 @@ fig, ax = plt.subplots()
 bar_container = ax.bar(states, expenses, color=colors)
 ax.set_xticks(states)
 ax.bar_label(bar_container, fmt='{:,.0f}')
-ax.set_ylabel('Revenue (in 100 milions)')
-ax.set_xlabel('States')
-ax.set_title('Revenue by states of USA')
+ax.set_ylabel('Pajamos (100 milijonų)')
+ax.set_xlabel('Valstijos')
+ax.set_title('Tenkančių pajamų skaičius valstijai grafikas')
 plt.show()
