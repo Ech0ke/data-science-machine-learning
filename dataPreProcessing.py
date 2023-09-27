@@ -62,6 +62,30 @@ print("\nStandard deviation values of columns")
 data_median = data_filtered.std()
 print(data_median.map(lambda x: "{:.2f}".format(x)))
 
+# Group the data by the 'Industry' column
+data_grouped_by_industry = data.groupby('Industry')
+
+# Iterate through each group (industry) and calculate summary statistics
+for industry, group_data in data_grouped_by_industry:
+
+    # Initialize an empty DataFrame to store the summary statistics for industry being looped through
+    industry_summary = pd.DataFrame()
+
+    # Calculate summary statistics for the current industry
+    industry_stats = group_data.describe()
+
+    # Add a column to identify the industry in the summary statistics
+    industry_stats['Industry'] = industry
+
+    # Concatenate the summary statistics for the current industry to the result DataFrame
+    industry_summary = pd.concat([industry_summary, industry_stats])
+
+    # Reset the index of the result DataFrame
+    industry_summary.reset_index(inplace=True)
+
+    print(f"{industry_summary}\n\n")
+
+
 # Create a list to store the indices of rows to remove
 rows_to_remove = []
 
