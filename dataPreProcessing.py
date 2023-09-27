@@ -141,54 +141,51 @@ data.reset_index(drop=True, inplace=True)
 
 # Part 5 Outliers
 
-
-def remove_outliers(data):
-    data_columns = ["Inception", "Revenue",
-                    "Profit", "Expenses", "Employees", "Growth"]
-    cleaned_data = data.copy()
-
-    for column_name in data_columns:
-
-        # Calculate the first quartile (Q1) and third quartile (Q3)
-        q1 = np.percentile(data[column_name], 25)
-        q3 = np.percentile(data[column_name], 75)
-
-        # Calculate the interquartile range (IQR)
-        iqr = q3 - q1
-
-        # Define the inner and outside barriers
-        inner_barrier_lower = q1 - 1.5 * iqr
-        inner_barrier_upper = q3 + 1.5 * iqr
-
-        outside_barrier_lower = q1 - 3 * iqr
-        outside_barrier_upper = q3 + 3 * iqr
-
-        # Find outliers using the inner and outside barriers
-        mild_outliers = []
-        extreme_outliers = []
-        index = 0
-        for value in data[column_name]:
-            # Find indexes of mild outliers
-            if value < inner_barrier_lower or value > inner_barrier_upper and value > outside_barrier_lower and value < outside_barrier_upper:
-                mild_outliers.append(index)
-            # Find indeces of extreme outliers
-            elif value < outside_barrier_lower or value > outside_barrier_upper:
-                extreme_outliers.append(index)
-            index += 1
-
-        cleaned_data = cleaned_data.drop(mild_outliers + extreme_outliers)
-
-        # Reset the index after removing rows
-        cleaned_data.reset_index(drop=True, inplace=True)
-
-    return cleaned_data
+def remove_outliers(dataset, column_names):
+    # Define a multiplier to control the threshold for identifying extreme outliers
+    extreme_outlier_multiplier = 3.0
+    
+    # Create a copy of the dataset to avoid modifying the original data
+    data = dataset.copy()
+    
+    # Iterate through the specified column names
+    for column_name in column_names:
+        # Calculate the IQR (Interquartile Range) for the current column
+        Q1 = data[column_name].quantile(0.25)
+        Q3 = data[column_name].quantile(0.75)
+        IQR = Q3 - Q1
+        
+        # Define the lower and upper bounds for mild and extreme outliers
+        lower_bound_mild = Q1 - 1.5 * IQR
+        upper_bound_mild = Q3 + 1.5 * IQR
+        lower_bound_extreme = Q1 - extreme_outlier_multiplier * IQR
+        upper_bound_extreme = Q3 + extreme_outlier_multiplier * IQR
+        
+        # Find and count mild outliers
+        mild_outliers = data[(data[column_name] < lower_bound_mild) | (data[column_name] > upper_bound_mild)]
+        mild_outliers_count = mild_outliers.shape[0]
+        
+        # Find and count extreme outliers
+        extreme_outliers = data[(data[column_name] < lower_bound_extreme) | (data[column_name] > upper_bound_extreme)]
+        extreme_outliers_count = extreme_outliers.shape[0]
+        
+        # Remove outliers from the data
+        data = data[~((data[column_name] < lower_bound_mild) | (data[column_name] > upper_bound_mild))]
+        
+        # Print the counts of mild and extreme outliers for the current column
+        print(f"Column: {column_name}")
+        print(f"Mild Outliers Count: {mild_outliers_count}")
+        print(f"Extreme Outliers Count: {extreme_outliers_count}")
+    
+    return data
 
 # To test before and after
 # fig = px.box(data, y='Revenue')
 # fig.show()
 
-
-no_outliers_data = remove_outliers(data)
+data_columns = ["Inception", "Revenue",
+                    "Profit", "Expenses", "Employees", "Growth"]
+no_outliers_data = remove_outliers(data, data_columns)
 
 # fig = px.box(data, y='Revenue')
 # fig.show()
