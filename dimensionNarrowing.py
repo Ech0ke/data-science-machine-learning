@@ -12,8 +12,8 @@ pd.options.display.float_format = '{:.2f}'.format
 # Load the CSV data into object
 data = pd.read_csv('global-data-on-sustainable-energy.csv')
 
-filtered_data = data[data['Year'].isin([2014, 2019])].copy()
-filtered_data['Density\\n(P/Km2)'] = pd.to_numeric(filtered_data['Density\\n(P/Km2)'].str.replace(r'[, ]', '', regex=True))
+filtered_data = data[data['Year'].isin([2014, 2019])]
+
 # Write the filtered data to a new CSV file
 filtered_data.to_csv('filtered-data.csv', index=False)
 
@@ -29,19 +29,3 @@ for year, group in grouped_filtered_data:
     with open(f'{year_str}_descriptive_analysis.txt', 'w') as f:
         f.write(f"Summary Statistics for Year {year}:\n")
         f.write(group.describe().to_string())
-
-normalized_data_min_max = filtered_data.copy()
-
-numeric_columns = ['Year', f'Access to electricity (% of population)', 'Access to clean fuels for cooking', 'Renewable-electricity-generating-capacity-per-capita',
-                   'Financial flows to developing countries (US $)', 'Renewable energy share in the total final energy consumption (%)', 
-                   'Electricity from fossil fuels (TWh)', 'Electricity from nuclear (TWh)', 'Electricity from renewables (TWh)', f'Low-carbon electricity (% electricity)',
-                   'Primary energy consumption per capita (kWh/person)', 'Energy intensity level of primary energy (MJ/$2017 PPP GDP)', 'Value_co2_emissions_kt_by_country',
-                   f'Renewables (% equivalent primary energy)', 'gdp_growth', 'gdp_per_capita', 'Density\\n(P/Km2)', 'Land Area(Km2)']
-
-# Min-Max normalization for numeric columns
-min_vals = filtered_data[numeric_columns].min()
-max_vals = filtered_data[numeric_columns].max()
-normalized_data_min_max[numeric_columns] = (
-    filtered_data[numeric_columns] - min_vals) / (max_vals - min_vals)
-
-normalized_data_min_max.to_csv('normalized.csv', index=False)
