@@ -12,6 +12,19 @@ pd.options.display.float_format = '{:.2f}'.format
 # Load the CSV data into object
 data = pd.read_csv('global-data-on-sustainable-energy.csv')
 
+columns_to_remove = [
+    'Latitude',
+    'Longitude', 
+    'Renewable-electricity-generating-capacity-per-capita',
+    'Financial flows to developing countries (US $)',
+    'Energy intensity level of primary energy (MJ/$2017 PPP GDP)',
+    f'Renewables (% equivalent primary energy)'
+]
+data.drop(columns=columns_to_remove, inplace=True)
+
+data.dropna(inplace=True)
+data.reset_index(drop=True, inplace=True)
+
 filtered_data = data[data['Year'].isin([2014, 2019])].copy()
 filtered_data['Density\\n(P/Km2)'] = pd.to_numeric(filtered_data['Density\\n(P/Km2)'].str.replace(r'[, ]', '', regex=True))
 
@@ -34,11 +47,11 @@ for year, group in grouped_filtered_data:
 
 normalized_data_min_max = filtered_data.copy()
 
-numeric_columns = ['Year', f'Access to electricity (% of population)', 'Access to clean fuels for cooking', 'Renewable-electricity-generating-capacity-per-capita',
-                   'Financial flows to developing countries (US $)', 'Renewable energy share in the total final energy consumption (%)', 
-                   'Electricity from fossil fuels (TWh)', 'Electricity from nuclear (TWh)', 'Electricity from renewables (TWh)', f'Low-carbon electricity (% electricity)',
-                   'Primary energy consumption per capita (kWh/person)', 'Energy intensity level of primary energy (MJ/$2017 PPP GDP)', 'Value_co2_emissions_kt_by_country',
-                   f'Renewables (% equivalent primary energy)', 'gdp_growth', 'gdp_per_capita', 'Density\\n(P/Km2)', 'Land Area(Km2)']
+numeric_columns = ['Year', f'Access to electricity (% of population)', 'Access to clean fuels for cooking',
+                   'Renewable energy share in the total final energy consumption (%)', 'Electricity from fossil fuels (TWh)',
+                   'Electricity from nuclear (TWh)', 'Electricity from renewables (TWh)', f'Low-carbon electricity (% electricity)',
+                   'Primary energy consumption per capita (kWh/person)', 'Value_co2_emissions_kt_by_country',
+                   'gdp_growth', 'gdp_per_capita', 'Density\\n(P/Km2)', 'Land Area(Km2)']
 
 # Min-Max normalization for numeric columns
 min_vals = filtered_data[numeric_columns].min()
