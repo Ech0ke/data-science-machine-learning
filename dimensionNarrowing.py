@@ -67,32 +67,52 @@ normalized_data_min_max.to_csv('normalized.csv', index=False)
 
 # UMAP method
 
-filtered_data_grouped_by_country = filtered_data.groupby("Entity").mean()
-reduced_data_umap = umap.UMAP(n_components=2).fit_transform(
-    filtered_data_grouped_by_country)
+# filtered_data_grouped_by_country = filtered_data.groupby("Entity").mean()
+filtered_data_grouped_by_country = filtered_data.groupby(
+    "Entity", as_index=False).mean()
+filtered_data_grouped_by_country.to_csv(
+    'filtered_data_grouped_by_country.csv', index=False)
+
+
+umap_data = filtered_data_grouped_by_country.drop(
+    columns=["Entity", "Access to electricity (% of population)"])
+
+reduced_data_umap = umap.UMAP(n_components=2, random_state=42).fit_transform(
+    umap_data)
 
 umap_df = pd.DataFrame(reduced_data_umap, columns=["x", "y"])
-umap_df["Entity"] = filtered_data_grouped_by_country.index
-umap_df["Access to electricity (% of population)"] = filtered_data_grouped_by_country.reset_index()[
-    "Access to electricity (% of population)"]
+umap_df["Entity"] = filtered_data_grouped_by_country["Entity"]
+umap_df["Access to electricity (% of population)"] = filtered_data_grouped_by_country["Access to electricity (% of population)"]
 
 # Use Plotly Express for interactive plotting
 fig_electricity_percentage = px.scatter(umap_df, x="x", y="y",
                                         color="Access to electricity (% of population)", hover_name="Entity")
 # Adjust marker size for better visibility
 fig_electricity_percentage.update_traces(marker=dict(size=5))
-fig_electricity_percentage.update_layout(title="UMAP Projection of Your Data")
-
-# umap_df_new = pd.DataFrame(reduced_data_umap, columns=["UMAP1", "UMAP2"])
-# umap_df_new["Entity"] = filtered_data["Entity"]
-# umap_df_new["Value_co2_emissions_kt_by_country"] = filtered_data["Value_co2_emissions_kt_by_country"]
-# umap_df_new["Density\n(P/Km2)"] = filtered_data["Density\\n(P/Km2)"]
-
-# # Use Plotly Express for the new plot (color by "Value_co2_emissions_kt_by_country")
-# fig_new = px.scatter(umap_df_new, x="UMAP1", y="UMAP2",
-#                      color="Value_co2_emissions_kt_by_country", hover_name="Entity")
-# fig_new.update_traces(marker=dict(size=5))
-# fig_new.update_layout(title="UMAP Projection of Your Data (CO2 Emissions)")
-
+fig_electricity_percentage.update_layout(title="UMAP Projection")
 fig_electricity_percentage.show()
-# fig_new.show()  # Display the interactive plot
+
+normalized_data_grouped_by_country = normalized_data_min_max.groupby(
+    "Entity", as_index=False).mean()
+
+# UMAP for normalized data
+umap_data_normalized = normalized_data_grouped_by_country.drop(
+    columns=["Entity", "Access to electricity (% of population)"])
+
+reduced_data_umap_normalized = umap.UMAP(n_components=2, random_state=42).fit_transform(
+    umap_data_normalized)
+
+umap_df_normalized = pd.DataFrame(
+    reduced_data_umap_normalized, columns=["x", "y"])
+umap_df_normalized["Entity"] = normalized_data_grouped_by_country["Entity"]
+umap_df_normalized["Access to electricity (% of population)"] = normalized_data_grouped_by_country[
+    "Access to electricity (% of population)"]
+
+# Use Plotly Express for interactive plotting for normalized data
+fig_electricity_percentage_normalized = px.scatter(umap_df_normalized, x="x", y="y",
+                                                   color="Access to electricity (% of population)", hover_name="Entity")
+# Adjust marker size for better visibility
+fig_electricity_percentage_normalized.update_traces(marker=dict(size=5))
+fig_electricity_percentage_normalized.update_layout(
+    title="UMAP Projection (Normalized Data)")
+fig_electricity_percentage_normalized.show()
