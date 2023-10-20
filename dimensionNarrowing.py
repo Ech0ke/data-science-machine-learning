@@ -65,15 +65,13 @@ normalized_data_min_max.to_csv('normalized.csv', index=False)
 
 # Task 4: dimension narrowing
 
-# UMAP method
-
-# filtered_data_grouped_by_country = filtered_data.groupby("Entity").mean()
+# Data preparation for dimension narrowing algorithms
 filtered_data_grouped_by_country = filtered_data.groupby(
     "Entity", as_index=False).mean()
 filtered_data_grouped_by_country.to_csv(
     'filtered_data_grouped_by_country.csv', index=False)
 
-
+# UMAP for filtered data
 umap_data = filtered_data_grouped_by_country.drop(
     columns=["Entity", "Access to electricity (% of population)"])
 
@@ -81,10 +79,12 @@ reduced_data_umap = umap.UMAP(n_components=2, random_state=42).fit_transform(
     umap_data)
 
 umap_df = pd.DataFrame(reduced_data_umap, columns=["x", "y"])
+
+# Add back misisng columns for data visualization
 umap_df["Entity"] = filtered_data_grouped_by_country["Entity"]
 umap_df["Access to electricity (% of population)"] = filtered_data_grouped_by_country["Access to electricity (% of population)"]
 
-# Use Plotly Express for interactive plotting
+# Use Plotly Express for interactive plotting for filtered data
 fig_electricity_percentage = px.scatter(umap_df, x="x", y="y",
                                         color="Access to electricity (% of population)", hover_name="Entity")
 # Adjust marker size for better visibility
@@ -104,6 +104,8 @@ reduced_data_umap_normalized = umap.UMAP(n_components=2, random_state=42).fit_tr
 
 umap_df_normalized = pd.DataFrame(
     reduced_data_umap_normalized, columns=["x", "y"])
+
+# Add back misisng columns for data visualization
 umap_df_normalized["Entity"] = normalized_data_grouped_by_country["Entity"]
 umap_df_normalized["Access to electricity (% of population)"] = normalized_data_grouped_by_country[
     "Access to electricity (% of population)"]
