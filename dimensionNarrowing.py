@@ -3,6 +3,12 @@ import plotly.express as px
 import numpy as np
 import locale
 import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+
+from sklearn.decomposition import PCA
 
 # Task 1: select data to analyse
 # Set the locale to use thousands separators
@@ -60,3 +66,35 @@ normalized_data_min_max[numeric_columns] = (
     filtered_data[numeric_columns] - min_vals) / (max_vals - min_vals)
 
 normalized_data_min_max.to_csv('normalized.csv', index=False)
+
+# Principal Component Analysis (PCA) method
+
+# Not normalized data
+x = filtered_data.loc[:, numeric_columns].values
+x = StandardScaler().fit_transform(x)
+
+pca = PCA(n_components=2, random_state=200, svd_solver="randomized")
+principal_components = pca.fit_transform(x)
+
+principal_df = pd.DataFrame(data=principal_components, columns=['principal component 1', 'principal component 2'])
+final_df = pd.concat([principal_df, filtered_data['Entity'].reset_index(drop=True)], axis=1)
+
+fig = px.scatter(final_df, x='principal component 1', y='principal component 2',
+                color='Entity', hover_data=['Entity'], labels={'Entity': 'Valstybė', 'principal component 1': 'x', 'principal component 2': 'y'})
+fig.update_layout(title='2 dimensijų PCA algoritmas', xaxis_title='x', yaxis_title='y')
+fig.show()
+
+# Normalized data
+x = normalized_data_min_max.loc[:, numeric_columns].values
+x = StandardScaler().fit_transform(x)
+
+pca = PCA(n_components=2, random_state=200, svd_solver="randomized")
+principal_components = pca.fit_transform(x)
+
+principal_df = pd.DataFrame(data=principal_components, columns=['principal component 1', 'principal component 2'])
+final_df = pd.concat([principal_df, filtered_data['Entity'].reset_index(drop=True)], axis=1)
+
+fig = px.scatter(final_df, x='principal component 1', y='principal component 2',
+                color='Entity', hover_data=['Entity'], labels={'Entity': 'Valstybė', 'principal component 1': 'x', 'principal component 2': 'y'})
+fig.update_layout(title='2 dimensijų PCA algoritmas', xaxis_title='x', yaxis_title='y')
+fig.show()
