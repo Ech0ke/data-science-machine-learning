@@ -1,13 +1,7 @@
 import pandas as pd
 import plotly.express as px
-import numpy as np
 import locale
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
-
+import umap
 from sklearn.decomposition import PCA
 
 # Task 1: select data to analyse
@@ -20,7 +14,7 @@ data = pd.read_csv('global-data-on-sustainable-energy.csv')
 
 columns_to_remove = [
     'Latitude',
-    'Longitude', 
+    'Longitude',
     'Renewable-electricity-generating-capacity-per-capita',
     'Financial flows to developing countries (US $)',
     'Energy intensity level of primary energy (MJ/$2017 PPP GDP)',
@@ -32,7 +26,8 @@ data.dropna(inplace=True)
 data.reset_index(drop=True, inplace=True)
 
 filtered_data = data[data['Year'].isin([2014, 2019])].copy()
-filtered_data['Density\\n(P/Km2)'] = pd.to_numeric(filtered_data['Density\\n(P/Km2)'].str.replace(r'[, ]', '', regex=True))
+filtered_data['Density\\n(P/Km2)'] = pd.to_numeric(
+    filtered_data['Density\\n(P/Km2)'].str.replace(r'[, ]', '', regex=True))
 
 # Write the filtered data to a new CSV file
 filtered_data.to_csv('filtered-data.csv', index=False)
@@ -59,7 +54,7 @@ numeric_columns = ['Year', f'Access to electricity (% of population)', 'Access t
                    'Primary energy consumption per capita (kWh/person)', 'Value_co2_emissions_kt_by_country',
                    'gdp_growth', 'gdp_per_capita', 'Density\\n(P/Km2)', 'Land Area(Km2)']
 
-# Min-Max normalization for numeric columns
+# Task 3: Min-Max normalization for numeric columns
 min_vals = filtered_data[numeric_columns].min()
 max_vals = filtered_data[numeric_columns].max()
 normalized_data_min_max[numeric_columns] = (
@@ -67,34 +62,99 @@ normalized_data_min_max[numeric_columns] = (
 
 normalized_data_min_max.to_csv('normalized.csv', index=False)
 
-# Principal Component Analysis (PCA) method
+# Task 4: dimension narrowing
 
-# Not normalized data
-x = filtered_data.loc[:, numeric_columns].values
-x = StandardScaler().fit_transform(x)
+# Data preparation for dimension narrowing algorithms
+filtered_data_grouped_by_country = filtered_data.groupby(
+    "Entity", as_index=False).mean()
+filtered_data_grouped_by_country.to_csv(
+    'filtered_data_grouped_by_country.csv', index=False)
 
-pca = PCA(n_components=2, random_state=200, svd_solver="randomized")
-principal_components = pca.fit_transform(x)
+# UMAP for filtered data
+umap_data = filtered_data_grouped_by_country.drop(
+    columns=["Entity", "Access to electricity (% of population)"])
 
-principal_df = pd.DataFrame(data=principal_components, columns=['principal component 1', 'principal component 2'])
-final_df = pd.concat([principal_df, filtered_data['Entity'].reset_index(drop=True)], axis=1)
+reduced_data_umap = umap.UMAP(n_components=2, random_state=42).fit_transform(
+    umap_data)
 
-fig = px.scatter(final_df, x='principal component 1', y='principal component 2',
-                color='Entity', hover_data=['Entity'], labels={'Entity': 'Valstybė', 'principal component 1': 'x', 'principal component 2': 'y'})
-fig.update_layout(title='2 dimensijų PCA algoritmas', xaxis_title='x', yaxis_title='y')
-fig.show()
+umap_df = pd.DataFrame(reduced_data_umap, columns=["x", "y"])
 
-# Normalized data
-x = normalized_data_min_max.loc[:, numeric_columns].values
-x = StandardScaler().fit_transform(x)
+# Add back misisng columns for data visualization
+umap_df["Valstybė"] = filtered_data_grouped_by_country["Entity"]
+umap_df["Prieiga prie elektros (% nuo populiacijos)"] = filtered_data_grouped_by_country["Access to electricity (% of population)"]
 
-pca = PCA(n_components=2, random_state=200, svd_solver="randomized")
-principal_components = pca.fit_transform(x)
+# Use Plotly Express for interactive plotting for filtered data
+fig_electricity_percentage = px.scatter(umap_df, x="x", y="y",
+                                        color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
+# Adjust marker size for better visibility
+fig_electricity_percentage.update_traces(marker=dict(size=5))
+fig_electricity_percentage.update_layout(title="UMAP projekcija")
+fig_electricity_percentage.show()
 
-principal_df = pd.DataFrame(data=principal_components, columns=['principal component 1', 'principal component 2'])
-final_df = pd.concat([principal_df, filtered_data['Entity'].reset_index(drop=True)], axis=1)
+normalized_data_grouped_by_country = normalized_data_min_max.groupby(
+    "Entity", as_index=False).mean()
 
-fig = px.scatter(final_df, x='principal component 1', y='principal component 2',
-                color='Entity', hover_data=['Entity'], labels={'Entity': 'Valstybė', 'principal component 1': 'x', 'principal component 2': 'y'})
-fig.update_layout(title='2 dimensijų PCA algoritmas', xaxis_title='x', yaxis_title='y')
-fig.show()
+# UMAP for normalized data
+umap_data_normalized = normalized_data_grouped_by_country.drop(
+    columns=["Entity", "Access to electricity (% of population)"])
+
+reduced_data_umap_normalized = umap.UMAP(n_components=2, random_state=42).fit_transform(
+    umap_data_normalized)
+
+umap_df_normalized = pd.DataFrame(
+    reduced_data_umap_normalized, columns=["x", "y"])
+
+# Add back misisng columns for data visualization
+umap_df_normalized["Valstybė"] = normalized_data_grouped_by_country["Entity"]
+umap_df_normalized["Prieiga prie elektros (% nuo populiacijos)"] = normalized_data_grouped_by_country[
+    "Access to electricity (% of population)"]
+
+# Use Plotly Express for interactive plotting for normalized data
+fig_electricity_percentage_normalized = px.scatter(umap_df_normalized, x="x", y="y",
+                                                   color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
+# Adjust marker size for better visibility
+fig_electricity_percentage_normalized.update_traces(marker=dict(size=5))
+fig_electricity_percentage_normalized.update_layout(
+    title="UMAP projekcija (normalizuoti duomenys)")
+fig_electricity_percentage_normalized.show()
+
+# PCA for filtered data
+pca_data = filtered_data_grouped_by_country.drop(
+    columns=["Entity", "Access to electricity (% of population)"])
+
+reduced_data_pca = PCA(n_components=2).fit_transform(pca_data)
+
+pca_df = pd.DataFrame(reduced_data_umap, columns=["x", "y"])
+
+# Add back misisng columns for data visualization
+pca_df["Valstybė"] = filtered_data_grouped_by_country["Entity"]
+pca_df["Prieiga prie elektros (% nuo populiacijos)"] = filtered_data_grouped_by_country["Access to electricity (% of population)"]
+
+# Use Plotly Express for interactive plotting for filtered data
+fig_electricity_percentage = px.scatter(pca_df, x="x", y="y",
+                                        color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
+# Adjust marker size for better visibility
+fig_electricity_percentage.update_traces(marker=dict(size=5))
+fig_electricity_percentage.update_layout(title="PCA projekcija")
+fig_electricity_percentage.show()
+
+# PCA for normalized data
+pca_data_normalized = normalized_data_grouped_by_country.drop(
+    columns=["Entity", "Access to electricity (% of population)"])
+
+reduced_data_pca_normalized = PCA(n_components=2).fit_transform(pca_data_normalized)
+
+pca_df_normalized = pd.DataFrame(reduced_data_pca_normalized, columns=["x", "y"])
+
+# Add back misisng columns for data visualization
+pca_df_normalized["Valstybė"] = normalized_data_grouped_by_country["Entity"]
+pca_df_normalized["Prieiga prie elektros (% nuo populiacijos)"] = normalized_data_grouped_by_country["Access to electricity (% of population)"]
+
+# Use Plotly Express for interactive plotting for normalized data
+fig_electricity_percentage_normalized = px.scatter(pca_df_normalized, x="x", y="y",
+                                                   color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
+# Adjust marker size for better visibility
+fig_electricity_percentage_normalized.update_traces(marker=dict(size=5))
+fig_electricity_percentage_normalized.update_layout(
+    title="PCA projekcija (normalizuoti duomenys)")
+fig_electricity_percentage_normalized.show()
