@@ -133,7 +133,7 @@ pca_df["Valstybė"] = filtered_data_grouped_by_country["Entity"]
 pca_df["Prieiga prie elektros (% nuo populiacijos)"] = filtered_data_grouped_by_country["Access to electricity (% of population)"]
 
 # Use Plotly Express for interactive plotting for filtered data
-fig_electricity_percentage = px.scatter(pca_df, x="x", y="y",
+fig_electricity_percentage = px.scatter(pca_df, x="x", y="y", range_x=[-600000, 600000], range_y=[-600000, 600000],
                                         color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
 # Adjust marker size for better visibility
 fig_electricity_percentage.update_traces(marker=dict(size=5))
@@ -153,7 +153,7 @@ pca_df_normalized["Valstybė"] = normalized_data_grouped_by_country["Entity"]
 pca_df_normalized["Prieiga prie elektros (% nuo populiacijos)"] = normalized_data_grouped_by_country["Access to electricity (% of population)"]
 
 # Use Plotly Express for interactive plotting for normalized data
-fig_electricity_percentage_normalized = px.scatter(pca_df_normalized, x="x", y="y",
+fig_electricity_percentage_normalized = px.scatter(pca_df_normalized, x="x", y="y", range_x=[-1, 1], range_y=[-1, 1],
                                                    color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
 # Adjust marker size for better visibility
 fig_electricity_percentage_normalized.update_traces(marker=dict(size=5))
