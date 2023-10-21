@@ -126,7 +126,7 @@ pca_data = filtered_data_grouped_by_country.drop(
 
 reduced_data_pca = PCA(n_components=2).fit_transform(pca_data)
 
-pca_df = pd.DataFrame(reduced_data_umap, columns=["x", "y"])
+pca_df = pd.DataFrame(reduced_data_pca, columns=["x", "y"])
 
 # Add back misisng columns for data visualization
 pca_df["Valstybė"] = filtered_data_grouped_by_country["Entity"]
