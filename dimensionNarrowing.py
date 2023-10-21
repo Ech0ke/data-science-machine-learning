@@ -89,6 +89,7 @@ fig_electricity_percentage = px.scatter(umap_df, x="x", y="y",
 # Adjust marker size for better visibility
 fig_electricity_percentage.update_traces(marker=dict(size=5))
 fig_electricity_percentage.update_layout(title="UMAP projekcija")
+
 fig_electricity_percentage.show()
 
 normalized_data_grouped_by_country = normalized_data_min_max.groupby(
@@ -112,6 +113,7 @@ umap_df_normalized["Prieiga prie elektros (% nuo populiacijos)"] = normalized_da
 # Use Plotly Express for interactive plotting for normalized data
 fig_electricity_percentage_normalized = px.scatter(umap_df_normalized, x="x", y="y",
                                                    color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
+
 # Adjust marker size for better visibility
 fig_electricity_percentage_normalized.update_traces(marker=dict(size=5))
 fig_electricity_percentage_normalized.update_layout(
