@@ -164,7 +164,7 @@ adjust_colour_and_show(fig_electricity_percentage_normalized, "PCA projekcija (n
 mds_data = filtered_data_grouped_by_country.drop(
     columns=["Entity", "Access to electricity (% of population)"])
 
-mds = MDS(n_components=2, dissimilarity='euclidean')  # You can adjust the dissimilarity metric
+mds = MDS(n_components=2, dissimilarity='euclidean', random_state = 99)
 reduced_data_mds = mds.fit_transform(mds_data)
 
 mds_df = pd.DataFrame(reduced_data_mds, columns=["x", "y"])
@@ -184,7 +184,7 @@ adjust_colour_and_show(fig_electricity_percentage_mds, "MDS projekcija")
 mds_data_normalized = normalized_data_grouped_by_country.drop(
     columns=["Entity", "Access to electricity (% of population)"])
 
-mds_normalized = MDS(n_components=2, dissimilarity='euclidean')  # You can adjust the dissimilarity metric
+mds_normalized = MDS(n_components=2, dissimilarity='euclidean', random_state = 15)
 reduced_data_mds_normalized = mds_normalized.fit_transform(mds_data_normalized)
 
 mds_df_normalized = pd.DataFrame(reduced_data_mds_normalized, columns=["x", "y"])
