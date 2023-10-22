@@ -84,11 +84,12 @@ umap_df["Valstybė"] = filtered_data_grouped_by_country["Entity"]
 umap_df["Prieiga prie elektros (% nuo populiacijos)"] = filtered_data_grouped_by_country["Access to electricity (% of population)"]
 
 # Use Plotly Express for interactive plotting for filtered data
-fig_electricity_percentage = px.scatter(umap_df, x="x", y="y",
+fig_electricity_percentage = px.scatter(umap_df, x="x", y="y", range_x=[-8, 15], range_y=[-6, 8],
                                         color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
 # Adjust marker size for better visibility
 fig_electricity_percentage.update_traces(marker=dict(size=5))
 fig_electricity_percentage.update_layout(title="UMAP projekcija")
+fig_electricity_percentage.update_layout(plot_bgcolor="#d0d0e1")
 
 fig_electricity_percentage.show()
 
@@ -111,13 +112,14 @@ umap_df_normalized["Prieiga prie elektros (% nuo populiacijos)"] = normalized_da
     "Access to electricity (% of population)"]
 
 # Use Plotly Express for interactive plotting for normalized data
-fig_electricity_percentage_normalized = px.scatter(umap_df_normalized, x="x", y="y",
+fig_electricity_percentage_normalized = px.scatter(umap_df_normalized, x="x", y="y", range_x=[-1, 14], range_y=[-1, 14],
                                                    color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
 
 # Adjust marker size for better visibility
 fig_electricity_percentage_normalized.update_traces(marker=dict(size=5))
 fig_electricity_percentage_normalized.update_layout(
     title="UMAP projekcija (normalizuoti duomenys)")
+fig_electricity_percentage_normalized.update_layout(plot_bgcolor="#d0d0e1")
 fig_electricity_percentage_normalized.show()
 
 # PCA for filtered data
@@ -133,30 +135,35 @@ pca_df["Valstybė"] = filtered_data_grouped_by_country["Entity"]
 pca_df["Prieiga prie elektros (% nuo populiacijos)"] = filtered_data_grouped_by_country["Access to electricity (% of population)"]
 
 # Use Plotly Express for interactive plotting for filtered data
-fig_electricity_percentage = px.scatter(pca_df, x="x", y="y", range_x=[-600000, 600000], range_y=[-600000, 600000],
+fig_electricity_percentage = px.scatter(pca_df, x="x", y="y", range_x=[-800000, 1400000], range_y=[-600000, 800000],
                                         color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
 # Adjust marker size for better visibility
 fig_electricity_percentage.update_traces(marker=dict(size=5))
 fig_electricity_percentage.update_layout(title="PCA projekcija")
+fig_electricity_percentage.update_layout(plot_bgcolor="#d0d0e1")
 fig_electricity_percentage.show()
 
 # PCA for normalized data
 pca_data_normalized = normalized_data_grouped_by_country.drop(
     columns=["Entity", "Access to electricity (% of population)"])
 
-reduced_data_pca_normalized = PCA(n_components=2).fit_transform(pca_data_normalized)
+reduced_data_pca_normalized = PCA(
+    n_components=2).fit_transform(pca_data_normalized)
 
-pca_df_normalized = pd.DataFrame(reduced_data_pca_normalized, columns=["x", "y"])
+pca_df_normalized = pd.DataFrame(
+    reduced_data_pca_normalized, columns=["x", "y"])
 
 # Add back misisng columns for data visualization
 pca_df_normalized["Valstybė"] = normalized_data_grouped_by_country["Entity"]
-pca_df_normalized["Prieiga prie elektros (% nuo populiacijos)"] = normalized_data_grouped_by_country["Access to electricity (% of population)"]
+pca_df_normalized["Prieiga prie elektros (% nuo populiacijos)"] = normalized_data_grouped_by_country[
+    "Access to electricity (% of population)"]
 
 # Use Plotly Express for interactive plotting for normalized data
-fig_electricity_percentage_normalized = px.scatter(pca_df_normalized, x="x", y="y", range_x=[-1, 1], range_y=[-1, 1],
+fig_electricity_percentage_normalized = px.scatter(pca_df_normalized, x="x", y="y", range_x=[-1, 14], range_y=[-1, 14],
                                                    color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
 # Adjust marker size for better visibility
 fig_electricity_percentage_normalized.update_traces(marker=dict(size=5))
 fig_electricity_percentage_normalized.update_layout(
     title="PCA projekcija (normalizuoti duomenys)")
+fig_electricity_percentage_normalized.update_layout(plot_bgcolor="#d0d0e1")
 fig_electricity_percentage_normalized.show()
