@@ -3,6 +3,7 @@ import plotly.express as px
 import locale
 import umap
 from sklearn.decomposition import PCA
+from sklearn.manifold import MDS
 
 # Task 1: select data to analyse
 # Set the locale to use thousands separators
@@ -64,6 +65,13 @@ normalized_data_min_max.to_csv('normalized.csv', index=False)
 
 # Task 4: dimension narrowing
 
+# Adjust marker size for better visibility
+def adjust_colour_and_show(figure, title):
+    figure.update_traces(marker=dict(size=5))
+    figure.update_layout(title=title)
+    figure.update_layout(plot_bgcolor="#d0d0e1")
+    figure.show()
+
 # Data preparation for dimension narrowing algorithms
 filtered_data_grouped_by_country = filtered_data.groupby(
     "Entity", as_index=False).mean()
@@ -86,12 +94,8 @@ umap_df["Prieiga prie elektros (% nuo populiacijos)"] = filtered_data_grouped_by
 # Use Plotly Express for interactive plotting for filtered data
 fig_electricity_percentage = px.scatter(umap_df, x="x", y="y", range_x=[-8, 15], range_y=[-6, 8],
                                         color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
-# Adjust marker size for better visibility
-fig_electricity_percentage.update_traces(marker=dict(size=5))
-fig_electricity_percentage.update_layout(title="UMAP projekcija")
-fig_electricity_percentage.update_layout(plot_bgcolor="#d0d0e1")
 
-fig_electricity_percentage.show()
+adjust_colour_and_show(fig_electricity_percentage, "UMAP projekcija")
 
 normalized_data_grouped_by_country = normalized_data_min_max.groupby(
     "Entity", as_index=False).mean()
@@ -115,12 +119,7 @@ umap_df_normalized["Prieiga prie elektros (% nuo populiacijos)"] = normalized_da
 fig_electricity_percentage_normalized = px.scatter(umap_df_normalized, x="x", y="y", range_x=[-1, 14], range_y=[-1, 14],
                                                    color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
 
-# Adjust marker size for better visibility
-fig_electricity_percentage_normalized.update_traces(marker=dict(size=5))
-fig_electricity_percentage_normalized.update_layout(
-    title="UMAP projekcija (normalizuoti duomenys)")
-fig_electricity_percentage_normalized.update_layout(plot_bgcolor="#d0d0e1")
-fig_electricity_percentage_normalized.show()
+adjust_colour_and_show(fig_electricity_percentage_normalized, "UMAP projekcija (normalizuoti duomenys)")
 
 # PCA for filtered data
 pca_data = filtered_data_grouped_by_country.drop(
@@ -137,11 +136,8 @@ pca_df["Prieiga prie elektros (% nuo populiacijos)"] = filtered_data_grouped_by_
 # Use Plotly Express for interactive plotting for filtered data
 fig_electricity_percentage = px.scatter(pca_df, x="x", y="y", range_x=[-800000, 1400000], range_y=[-600000, 800000],
                                         color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
-# Adjust marker size for better visibility
-fig_electricity_percentage.update_traces(marker=dict(size=5))
-fig_electricity_percentage.update_layout(title="PCA projekcija")
-fig_electricity_percentage.update_layout(plot_bgcolor="#d0d0e1")
-fig_electricity_percentage.show()
+
+adjust_colour_and_show(fig_electricity_percentage, "PCA projekcija")
 
 # PCA for normalized data
 pca_data_normalized = normalized_data_grouped_by_country.drop(
@@ -161,9 +157,46 @@ pca_df_normalized["Prieiga prie elektros (% nuo populiacijos)"] = normalized_dat
 # Use Plotly Express for interactive plotting for normalized data
 fig_electricity_percentage_normalized = px.scatter(pca_df_normalized, x="x", y="y", range_x=[-1, 14], range_y=[-1, 14],
                                                    color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
-# Adjust marker size for better visibility
-fig_electricity_percentage_normalized.update_traces(marker=dict(size=5))
-fig_electricity_percentage_normalized.update_layout(
-    title="PCA projekcija (normalizuoti duomenys)")
-fig_electricity_percentage_normalized.update_layout(plot_bgcolor="#d0d0e1")
-fig_electricity_percentage_normalized.show()
+
+adjust_colour_and_show(fig_electricity_percentage_normalized, "PCA projekcija (normalizuoti duomenys)")
+
+# MDS for filtered data
+mds_data = filtered_data_grouped_by_country.drop(
+    columns=["Entity", "Access to electricity (% of population)"])
+
+mds = MDS(n_components=2, dissimilarity='euclidean')  # You can adjust the dissimilarity metric
+reduced_data_mds = mds.fit_transform(mds_data)
+
+mds_df = pd.DataFrame(reduced_data_mds, columns=["x", "y"])
+
+# Add back missing columns for data visualization
+mds_df["Valstybė"] = filtered_data_grouped_by_country["Entity"]
+mds_df["Prieiga prie elektros (% nuo populiacijos)"] = filtered_data_grouped_by_country["Access to electricity (% of population)"]
+
+# Use Plotly Express for interactive plotting for MDS data
+fig_electricity_percentage_mds = px.scatter(mds_df, x="x", y="y", 
+    color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
+
+adjust_colour_and_show(fig_electricity_percentage_mds, "MDS projekcija")
+
+
+# MDS for normalized data
+mds_data_normalized = normalized_data_grouped_by_country.drop(
+    columns=["Entity", "Access to electricity (% of population)"])
+
+mds_normalized = MDS(n_components=2, dissimilarity='euclidean')  # You can adjust the dissimilarity metric
+reduced_data_mds_normalized = mds_normalized.fit_transform(mds_data_normalized)
+
+mds_df_normalized = pd.DataFrame(reduced_data_mds_normalized, columns=["x", "y"])
+
+# Add back missing columns for data visualization
+mds_df_normalized["Valstybė"] = normalized_data_grouped_by_country["Entity"]
+mds_df_normalized["Prieiga prie elektros (% nuo populiacijos)"] = normalized_data_grouped_by_country[
+    "Access to electricity (% of population)"]
+
+# Use Plotly Express for interactive plotting for MDS data
+fig_electricity_percentage_mds_normalized = px.scatter(mds_df_normalized, x="x", y="y", range_x=[-1, 14], range_y=[-1, 14],
+                                                       color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
+
+adjust_colour_and_show(fig_electricity_percentage_mds_normalized, "MDS projekcija (normalizuoti duomenys)")
+
