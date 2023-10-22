@@ -1,9 +1,8 @@
 import pandas as pd
 import plotly.express as px
-import numpy as np
 import locale
-import matplotlib.pyplot as plt
 import umap
+from sklearn.decomposition import PCA
 
 # Task 1: select data to analyse
 # Set the locale to use thousands separators
@@ -81,15 +80,17 @@ reduced_data_umap = umap.UMAP(n_components=2, random_state=42).fit_transform(
 umap_df = pd.DataFrame(reduced_data_umap, columns=["x", "y"])
 
 # Add back misisng columns for data visualization
-umap_df["Entity"] = filtered_data_grouped_by_country["Entity"]
-umap_df["Access to electricity (% of population)"] = filtered_data_grouped_by_country["Access to electricity (% of population)"]
+umap_df["Valstybė"] = filtered_data_grouped_by_country["Entity"]
+umap_df["Prieiga prie elektros (% nuo populiacijos)"] = filtered_data_grouped_by_country["Access to electricity (% of population)"]
 
 # Use Plotly Express for interactive plotting for filtered data
-fig_electricity_percentage = px.scatter(umap_df, x="x", y="y",
-                                        color="Access to electricity (% of population)", hover_name="Entity")
+fig_electricity_percentage = px.scatter(umap_df, x="x", y="y", range_x=[-8, 15], range_y=[-6, 8],
+                                        color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
 # Adjust marker size for better visibility
 fig_electricity_percentage.update_traces(marker=dict(size=5))
-fig_electricity_percentage.update_layout(title="UMAP Projection")
+fig_electricity_percentage.update_layout(title="UMAP projekcija")
+fig_electricity_percentage.update_layout(plot_bgcolor="#d0d0e1")
+
 fig_electricity_percentage.show()
 
 normalized_data_grouped_by_country = normalized_data_min_max.groupby(
@@ -106,15 +107,63 @@ umap_df_normalized = pd.DataFrame(
     reduced_data_umap_normalized, columns=["x", "y"])
 
 # Add back misisng columns for data visualization
-umap_df_normalized["Entity"] = normalized_data_grouped_by_country["Entity"]
-umap_df_normalized["Access to electricity (% of population)"] = normalized_data_grouped_by_country[
+umap_df_normalized["Valstybė"] = normalized_data_grouped_by_country["Entity"]
+umap_df_normalized["Prieiga prie elektros (% nuo populiacijos)"] = normalized_data_grouped_by_country[
     "Access to electricity (% of population)"]
 
 # Use Plotly Express for interactive plotting for normalized data
-fig_electricity_percentage_normalized = px.scatter(umap_df_normalized, x="x", y="y",
-                                                   color="Access to electricity (% of population)", hover_name="Entity")
+fig_electricity_percentage_normalized = px.scatter(umap_df_normalized, x="x", y="y", range_x=[-1, 14], range_y=[-1, 14],
+                                                   color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
+
 # Adjust marker size for better visibility
 fig_electricity_percentage_normalized.update_traces(marker=dict(size=5))
 fig_electricity_percentage_normalized.update_layout(
-    title="UMAP Projection (Normalized Data)")
+    title="UMAP projekcija (normalizuoti duomenys)")
+fig_electricity_percentage_normalized.update_layout(plot_bgcolor="#d0d0e1")
+fig_electricity_percentage_normalized.show()
+
+# PCA for filtered data
+pca_data = filtered_data_grouped_by_country.drop(
+    columns=["Entity", "Access to electricity (% of population)"])
+
+reduced_data_pca = PCA(n_components=2).fit_transform(pca_data)
+
+pca_df = pd.DataFrame(reduced_data_pca, columns=["x", "y"])
+
+# Add back misisng columns for data visualization
+pca_df["Valstybė"] = filtered_data_grouped_by_country["Entity"]
+pca_df["Prieiga prie elektros (% nuo populiacijos)"] = filtered_data_grouped_by_country["Access to electricity (% of population)"]
+
+# Use Plotly Express for interactive plotting for filtered data
+fig_electricity_percentage = px.scatter(pca_df, x="x", y="y", range_x=[-800000, 1400000], range_y=[-600000, 800000],
+                                        color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
+# Adjust marker size for better visibility
+fig_electricity_percentage.update_traces(marker=dict(size=5))
+fig_electricity_percentage.update_layout(title="PCA projekcija")
+fig_electricity_percentage.update_layout(plot_bgcolor="#d0d0e1")
+fig_electricity_percentage.show()
+
+# PCA for normalized data
+pca_data_normalized = normalized_data_grouped_by_country.drop(
+    columns=["Entity", "Access to electricity (% of population)"])
+
+reduced_data_pca_normalized = PCA(
+    n_components=2).fit_transform(pca_data_normalized)
+
+pca_df_normalized = pd.DataFrame(
+    reduced_data_pca_normalized, columns=["x", "y"])
+
+# Add back misisng columns for data visualization
+pca_df_normalized["Valstybė"] = normalized_data_grouped_by_country["Entity"]
+pca_df_normalized["Prieiga prie elektros (% nuo populiacijos)"] = normalized_data_grouped_by_country[
+    "Access to electricity (% of population)"]
+
+# Use Plotly Express for interactive plotting for normalized data
+fig_electricity_percentage_normalized = px.scatter(pca_df_normalized, x="x", y="y", range_x=[-1, 14], range_y=[-1, 14],
+                                                   color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
+# Adjust marker size for better visibility
+fig_electricity_percentage_normalized.update_traces(marker=dict(size=5))
+fig_electricity_percentage_normalized.update_layout(
+    title="PCA projekcija (normalizuoti duomenys)")
+fig_electricity_percentage_normalized.update_layout(plot_bgcolor="#d0d0e1")
 fig_electricity_percentage_normalized.show()
