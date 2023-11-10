@@ -117,12 +117,29 @@ def optimal_clusters_silhouette(clustering_data, clustering_columns):
         silhouette_scores.append(silhouette_avg)
         cluster_numbers.append(num_clusters)
 
-    # Find the optimal number of clusters based on the highest silhouette score
-    optimal_cluster_num = cluster_numbers[silhouette_scores.index(
-        max(silhouette_scores))]
+    # Plot silhouette scores for different numbers of clusters
+    plt.plot(cluster_numbers, silhouette_scores, marker='o')
+    plt.xlabel('Number of clusters')
+    plt.ylabel('Silhouette Score')
+    plt.title(f'Silhouette Scores for {", ".join(clustering_columns)}')
+    plt.show()
+
+    # Sort silhouette scores in descending order and retrieve the second highest score
+    sorted_scores = sorted(silhouette_scores, reverse=True)
+    # Index 1 corresponds to the second highest score
+    second_highest_score = sorted_scores[1]
+
+    # Retrieve the number of clusters for the second highest score
+    index_second_highest = silhouette_scores.index(second_highest_score)
+    second_optimal_cluster_num = cluster_numbers[index_second_highest]
+
     columns_string = ', '.join(clustering_columns)
+
+    # Print the second highest score and its respective number of clusters
     print(
-        f"For data: {columns_string}\nOptimal number of clusters suggested by Silhouette Method:", optimal_cluster_num)
+        f"For data: {columns_string}\nSecond highest silhouette score:", second_highest_score)
+    print(f"Number of clusters for the second highest score:",
+          second_optimal_cluster_num)
 
 
 optimal_clusters_silhouette(clustering_data_1, columns_for_clustering_1)
