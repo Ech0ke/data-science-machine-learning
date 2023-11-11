@@ -5,6 +5,7 @@ import umap
 from sklearn.cluster import AgglomerativeClustering
 import sklearn.cluster as cluster
 from sklearn.metrics import silhouette_score
+import sklearn.metrics as metrics
 import matplotlib.pyplot as plt
 from scipy.cluster.hierarchy import linkage, fcluster
 from scipy.spatial.distance import pdist
@@ -110,39 +111,25 @@ K = range(2, 20)
 
 
 def optimal_clusters_silhouette(clustering_data, clustering_columns, K):
-    silhouette_scores = []  # Store silhouette scores
-    cluster_numbers = []  # Store cluster numbers
+    sil_score = []
+    for i in K:
+        labels = cluster.KMeans(
+            n_clusters=i, init="k-means++", n_init=10, random_state=200).fit(clustering_data).labels_
+        score = metrics.silhouette_score(
+            clustering_data, labels, metric="euclidean", sample_size=1000, random_state=200)
+        sil_score.append(score)
+        print("Silhouette score for k(clusters) = "+str(i)+" is "
+              + str(metrics.silhouette_score(clustering_data, labels, metric="euclidean", sample_size=1000, random_state=200)))
 
-    for num_clusters in K:
-        clusterer = AgglomerativeClustering(n_clusters=num_clusters)
-        cluster_labels = clusterer.fit_predict(clustering_data)
-        silhouette_avg = silhouette_score(clustering_data, cluster_labels)
-        silhouette_scores.append(silhouette_avg)
-        cluster_numbers.append(num_clusters)
-
+    sil_centers = pd.DataFrame({'Clusters': K, 'Sil Score': sil_score})
     # Plot silhouette scores for different numbers of clusters
-    plt.plot(cluster_numbers, silhouette_scores, marker='o')
-    plt.xlabel('Number of clusters')
-    plt.ylabel('Silhouette Score')
-    plt.title(f'Silhouette Scores for {", ".join(clustering_columns)}')
-    plt.show()
-
-    # Sort silhouette scores in descending order and retrieve the second highest score
-    sorted_scores = sorted(silhouette_scores, reverse=True)
-    # Index 1 corresponds to the second highest score
-    second_highest_score = sorted_scores[1]
-
-    # Retrieve the number of clusters for the second highest score
-    index_second_highest = silhouette_scores.index(second_highest_score)
-    second_optimal_cluster_num = cluster_numbers[index_second_highest]
-
+    plt.plot(sil_centers['Clusters'], sil_centers['Sil Score'], marker='o')
     columns_string = ', '.join(clustering_columns)
-
-    # Print the second highest score and its respective number of clusters
-    print(
-        f"For data: {columns_string}\nSecond highest silhouette score:", second_highest_score)
-    print(f"Number of clusters for the second highest score:",
-          second_optimal_cluster_num)
+    plt.xlabel('Number of clusters')
+    plt.ylabel('Sil score')
+    plt.title(
+        f'Silhouette method for Optimal Cluster Number for columns {columns_string}')
+    plt.show()
 
 
 optimal_clusters_silhouette(clustering_data_1, columns_for_clustering_1, K)
