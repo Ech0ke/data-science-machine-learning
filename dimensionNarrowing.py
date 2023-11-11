@@ -3,10 +3,12 @@ import plotly.express as px
 import locale
 import umap
 from sklearn.cluster import AgglomerativeClustering
+import sklearn.cluster as cluster
 from sklearn.metrics import silhouette_score
 import matplotlib.pyplot as plt
 from scipy.cluster.hierarchy import linkage, fcluster
 from scipy.spatial.distance import pdist
+import seaborn as sns
 
 # Set the locale to use thousands separators
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
@@ -104,13 +106,14 @@ clustering_data_2 = normalized_data_grouped_by_country[columns_for_clustering_2]
 clustering_data_3 = normalized_data_grouped_by_country[columns_for_clustering_3]
 
 # Silhouette method
+K = range(2, 20)
 
 
-def optimal_clusters_silhouette(clustering_data, clustering_columns):
+def optimal_clusters_silhouette(clustering_data, clustering_columns, K):
     silhouette_scores = []  # Store silhouette scores
     cluster_numbers = []  # Store cluster numbers
 
-    for num_clusters in range(2, 20):
+    for num_clusters in K:
         clusterer = AgglomerativeClustering(n_clusters=num_clusters)
         cluster_labels = clusterer.fit_predict(clustering_data)
         silhouette_avg = silhouette_score(clustering_data, cluster_labels)
@@ -142,45 +145,37 @@ def optimal_clusters_silhouette(clustering_data, clustering_columns):
           second_optimal_cluster_num)
 
 
-optimal_clusters_silhouette(clustering_data_1, columns_for_clustering_1)
-optimal_clusters_silhouette(clustering_data_2, columns_for_clustering_2)
-optimal_clusters_silhouette(clustering_data_3, columns_for_clustering_3)
+optimal_clusters_silhouette(clustering_data_1, columns_for_clustering_1, K)
+optimal_clusters_silhouette(clustering_data_2, columns_for_clustering_2, K)
+optimal_clusters_silhouette(clustering_data_3, columns_for_clustering_3, K)
 
 # Elbow mehthod
 
 
-def optimal_clusters_elbow(clustering_data, clustering_columns):
-    # Convert data to pairwise distances
-    distance_matrix = pdist(clustering_data)
+def optimal_clusters_elbow(clustering_data, clustering_columns, K):
+    wss = []
+    for k in K:
+        # Set n_init explicitly
+        kmeans = cluster.KMeans(n_clusters=k, init="k-means++", n_init=10)
+        kmeans = kmeans.fit(clustering_data)
+        wss_iter = kmeans.inertia_
+        wss.append(wss_iter)
 
-    # Calculate linkage matrix
-    linkage_matrix = linkage(distance_matrix, method='ward')
+    mycenters = pd.DataFrame({'Clusters': K, 'WSS': wss})
 
-    # Calculate inertia (cophenetic distance) for different numbers of clusters
-    inertia = []
-    for num_clusters in range(2, 20):
-        clusters = fcluster(linkage_matrix, num_clusters, criterion='maxclust')
-        # Calculate the inertia within each cluster
-        inertia_sum = 0
-        for cluster_num in range(1, num_clusters + 1):
-            cluster_indices = (clusters == cluster_num)
-            cluster_data = clustering_data[cluster_indices]
-            inertia_sum += pdist(cluster_data).var()
-        inertia.append(inertia_sum)
-
-    # Plot the inertia
-    plt.plot(range(2, 20), inertia, marker='o')
+    # Plot the wss scores
+    plt.plot(mycenters['Clusters'], mycenters['WSS'], marker='o')
     columns_string = ', '.join(clustering_columns)
     plt.xlabel('Number of clusters')
-    plt.ylabel('Inertia')
+    plt.ylabel('WSS score')
     plt.title(
-        f'Elbow Method for Optimal Cluster Number  for columns {columns_string}')
+        f'Elbow Method for Optimal Cluster Number for columns {columns_string}')
     plt.show()
 
 
-optimal_clusters_elbow(clustering_data_1, columns_for_clustering_1)
-optimal_clusters_elbow(clustering_data_2, columns_for_clustering_2)
-optimal_clusters_elbow(clustering_data_3, columns_for_clustering_3)
+optimal_clusters_elbow(clustering_data_1, columns_for_clustering_1, K)
+optimal_clusters_elbow(clustering_data_2, columns_for_clustering_2, K)
+optimal_clusters_elbow(clustering_data_3, columns_for_clustering_3, K)
 
 # # UMAP for filtered data
 # umap_data = filtered_data_grouped_by_country.drop(
