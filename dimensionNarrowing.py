@@ -147,9 +147,10 @@ def optimal_clusters_elbow(clustering_data, clustering_columns, K):
         kmeans = kmeans.fit(clustering_data)
         wss_iter = kmeans.inertia_
         wss.append(wss_iter)
+        print("Wss score for k(clusters) = " + str(k) + " is "
+              + str(wss_iter))
 
     mycenters = pd.DataFrame({'Clusters': K, 'WSS': wss})
-
     # Plot the wss scores
     plt.plot(mycenters['Clusters'], mycenters['WSS'], marker='o')
     columns_string = ', '.join(clustering_columns)
