@@ -2,12 +2,13 @@ import pandas as pd
 import plotly.express as px
 import locale
 import umap
+import numpy as np
 from sklearn.cluster import AgglomerativeClustering
 import sklearn.cluster as cluster
 from sklearn.metrics import silhouette_score
 import sklearn.metrics as metrics
 import matplotlib.pyplot as plt
-from scipy.cluster.hierarchy import linkage, fcluster
+from scipy.cluster.hierarchy import linkage, fcluster, dendrogram
 from scipy.spatial.distance import pdist
 import seaborn as sns
 
@@ -109,7 +110,6 @@ clustering_data_3 = normalized_data_grouped_by_country[columns_for_clustering_3]
 # Silhouette method
 K = range(2, 20)
 
-
 def optimal_clusters_silhouette(clustering_data, clustering_columns, K):
     sil_score = []
     for i in K:
@@ -138,7 +138,6 @@ optimal_clusters_silhouette(clustering_data_3, columns_for_clustering_3, K)
 
 # Elbow mehthod
 
-
 def optimal_clusters_elbow(clustering_data, clustering_columns, K):
     wss = []
     for k in K:
@@ -164,6 +163,42 @@ def optimal_clusters_elbow(clustering_data, clustering_columns, K):
 optimal_clusters_elbow(clustering_data_1, columns_for_clustering_1, K)
 optimal_clusters_elbow(clustering_data_2, columns_for_clustering_2, K)
 optimal_clusters_elbow(clustering_data_3, columns_for_clustering_3, K)
+
+
+# Dendogram
+def plot_dendrogram(model, clustering_columns, lineHeight, **kwargs):
+    # Create linkage matrix and then plot the dendrogram
+    # create the counts of samples under each node
+    counts = np.zeros(model.children_.shape[0])
+    n_samples = len(model.labels_)
+    for i, merge in enumerate(model.children_):
+        current_count = 0
+        for child_idx in merge:
+            if child_idx < n_samples:
+                current_count += 1  # leaf node
+            else:
+                current_count += counts[child_idx - n_samples]
+        counts[i] = current_count
+
+    linkage_matrix = np.column_stack(
+        [model.children_, model.distances_, counts]
+    ).astype(float)
+
+    dendrogram(linkage_matrix, **kwargs)
+    plt.axhline(y=lineHeight, color='black', linestyle='--')
+    columns_string = '\n'.join(clustering_columns)
+    plt.title(f"Hierarchical Clustering Dendrogram for columns {columns_string}", pad=1)
+    plt.xlabel("Number of points in node (or index of point if no parenthesis).")
+    plt.show()
+
+model = AgglomerativeClustering(distance_threshold=0, n_clusters=None)
+model = model.fit(clustering_data_1)
+plot_dendrogram(model, columns_for_clustering_1, 0.75, truncate_mode="level")
+model = model.fit(clustering_data_2)
+plot_dendrogram(model, columns_for_clustering_2, 0.75, truncate_mode="level")
+model = model.fit(clustering_data_3)
+plot_dendrogram(model, columns_for_clustering_3, 1, truncate_mode="level")
+
 
 # # UMAP for filtered data
 # umap_data = filtered_data_grouped_by_country.drop(
