@@ -2,6 +2,7 @@ import pandas as pd
 import plotly.express as px
 import locale
 import umap
+import numpy as np
 from sklearn.cluster import AgglomerativeClustering
 import sklearn.cluster as cluster
 from sklearn.metrics import silhouette_score
@@ -86,14 +87,14 @@ normalized_data_grouped_by_country = normalized_data_min_max.groupby(
     "Entity", as_index=False).mean()
 
 # Task 2 select columns for clustering
-columns_for_clustering_1 = [f'Access to electricity (% of population)',
-                            'Renewable energy share in the total final energy consumption (%)',
-                            'Electricity from fossil fuels (TWh)',
-                            'Electricity from nuclear (TWh)',
-                            'Electricity from renewables (TWh)']
+columns_for_clustering_1 = [
+    'Renewable energy share in the total final energy consumption (%)',
+    'Electricity from fossil fuels (TWh)',
+    'Electricity from nuclear (TWh)',
+    'Electricity from renewables (TWh)']
 
 columns_for_clustering_2 = [
-    f'Renewable energy share in the total final energy consumption (%)', 'Electricity from renewables (TWh)', 'Primary energy consumption per capita (kWh/person)', 'Value_co2_emissions_kt_by_country']
+    f'Low-carbon electricity (% electricity)', 'Electricity from renewables (TWh)', 'Primary energy consumption per capita (kWh/person)', f'Access to electricity (% of population)']
 
 columns_for_clustering_3 = [f'Access to electricity (% of population)', 'Access to clean fuels for cooking',
                             'Renewable energy share in the total final energy consumption (%)', 'Electricity from fossil fuels (TWh)',
@@ -165,43 +166,38 @@ optimal_clusters_elbow(clustering_data_1, columns_for_clustering_1, K)
 optimal_clusters_elbow(clustering_data_2, columns_for_clustering_2, K)
 optimal_clusters_elbow(clustering_data_3, columns_for_clustering_3, K)
 
-# # UMAP for filtered data
-# umap_data = filtered_data_grouped_by_country.drop(
-#     columns=["Entity", "Access to electricity (% of population)"])
 
-# reduced_data_umap = umap.UMAP(n_components=2, random_state=42).fit_transform(
-#     umap_data)
+def plot_correlation_heatmap(data, title):
+    correlation_matrix = data.corr()
+    plt.figure(figsize=(10, 8))  # Set the figure size to your preference
 
-# umap_df = pd.DataFrame(reduced_data_umap, columns=["x", "y"])
+    plt.imshow(correlation_matrix, cmap='RdYlBu', vmin=-1, vmax=1)
 
-# # Add back misisng columns for data visualization
-# umap_df["Valstybė"] = filtered_data_grouped_by_country["Entity"]
-# umap_df["Prieiga prie elektros (% nuo populiacijos)"] = filtered_data_grouped_by_country["Access to electricity (% of population)"]
+    # Add a colorbar
+    cbar = plt.colorbar()
+    cbar.set_label('Correlation')
 
-# # Use Plotly Express for interactive plotting for filtered data
-# fig_electricity_percentage = px.scatter(umap_df, x="x", y="y", range_x=[-8, 15], range_y=[-6, 8],
-#                                         color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
+    # Set ticks and labels with smaller fonts
+    ticks = range(len(correlation_matrix.columns))
+    plt.xticks(ticks, correlation_matrix.columns,
+               rotation=45, fontsize=8)  # Adjust fontsize
+    plt.yticks(ticks, correlation_matrix.columns,
+               fontsize=8)  # Adjust fontsize
 
-# adjust_colour_and_show(fig_electricity_percentage, "UMAP projekcija")
+    # Add correlation values to the heatmap
+    for i in range(len(correlation_matrix.columns)):
+        for j in range(len(correlation_matrix.columns)):
+            if i == j:
+                continue
+            plt.text(j, i, f'{correlation_matrix.iloc[i, j]:.2f}',
+                     ha='center', va='center', color='#303030', fontsize=6)  # Adjust fontsize
 
-# # UMAP for normalized data
-# umap_data_normalized = normalized_data_grouped_by_country.drop(
-#     columns=["Entity", "Access to electricity (% of population)"])
+    # Display the plot
+    plt.title(title)
+    plt.tight_layout()  # Ensure tight layout
+    plt.show()
 
-# reduced_data_umap_normalized = umap.UMAP(n_components=2, random_state=42).fit_transform(
-#     umap_data_normalized)
 
-# umap_df_normalized = pd.DataFrame(
-#     reduced_data_umap_normalized, columns=["x", "y"])
-
-# # Add back misisng columns for data visualization
-# umap_df_normalized["Valstybė"] = normalized_data_grouped_by_country["Entity"]
-# umap_df_normalized["Prieiga prie elektros (% nuo populiacijos)"] = normalized_data_grouped_by_country[
-#     "Access to electricity (% of population)"]
-
-# # Use Plotly Express for interactive plotting for normalized data
-# fig_electricity_percentage_normalized = px.scatter(umap_df_normalized, x="x", y="y", range_x=[-1, 14], range_y=[-1, 14],
-#                                                    color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
-
-# adjust_colour_and_show(fig_electricity_percentage_normalized,
-#                        "UMAP projekcija (normalizuoti duomenys)")
+plot_correlation_heatmap(clustering_data_1, "Correlation Matrix - Data 1")
+plot_correlation_heatmap(clustering_data_2, "Correlation Matrix - Data 2")
+plot_correlation_heatmap(clustering_data_3, "Correlation Matrix - Data 3")
