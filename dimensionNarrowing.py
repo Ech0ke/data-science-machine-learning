@@ -142,7 +142,7 @@ def plot_correlation_heatmap(data, title):
 
     # Add a colorbar
     cbar = plt.colorbar()
-    cbar.set_label('Correlation')
+    cbar.set_label('Koreliacija')
 
     # Set ticks and labels with smaller fonts
     ticks = range(len(correlation_matrix.columns))
@@ -167,11 +167,11 @@ def plot_correlation_heatmap(data, title):
 
 # Correlation matrixes for data sets
 plot_correlation_heatmap(
-    clustering_data_1, "Koreliacijos matrica 1 duomenų rinkiniui")
+    clustering_data_1, "Koreliacijos matrica 1 požymių rinkiniui")
 plot_correlation_heatmap(
-    clustering_data_2, "Koreliacijos matrica 2 duomenų rinkiniui")
+    clustering_data_2, "Koreliacijos matrica 2 požymių rinkiniui")
 plot_correlation_heatmap(
-    clustering_data_3, "Koreliacijos matrica 3 duomenų rinkiniui")
+    clustering_data_3, "Koreliacijos matrica 3 požymių rinkiniui")
 
 # Silhouette method
 
@@ -184,23 +184,24 @@ def optimal_clusters_silhouette(clustering_data, clustering_columns, K):
         score = metrics.silhouette_score(
             clustering_data, labels, metric="euclidean", sample_size=1000, random_state=200)
         sil_score.append(score)
-        print("Silhouette score for k(clusters) = "+str(i)+" is "
+        print("Vidutinio silueto taškai, kai k(klasterių sk.) = "+str(i)+" yra "
               + str(metrics.silhouette_score(clustering_data, labels, metric="euclidean", sample_size=1000, random_state=200)))
 
     sil_centers = pd.DataFrame({'Clusters': K, 'Sil Score': sil_score})
     # Plot silhouette scores for different numbers of clusters
     plt.plot(sil_centers['Clusters'], sil_centers['Sil Score'], marker='o')
-    columns_string = ', '.join(clustering_columns)
-    plt.xlabel('Number of clusters')
-    plt.ylabel('Sil score')
+    columns_string = '\n'.join(clustering_columns)
+    plt.xlabel('Klasterių skaičius')
+    plt.ylabel('Vidutinio silueto taškai')
+    plt.tight_layout()  # Ensure tight layout
     plt.title(
-        f'Silhouette method for Optimal Cluster Number for columns {columns_string}')
+        f'Vidutinio silueto metodas optimaliam klasterių skaičiui rasti, stulpeliams: {columns_string}')
     plt.show()
 
 
-# optimal_clusters_silhouette(clustering_data_1, columns_for_clustering_1, K)
-# optimal_clusters_silhouette(clustering_data_2, columns_for_clustering_2, K)
-# optimal_clusters_silhouette(clustering_data_3, columns_for_clustering_3, K)
+optimal_clusters_silhouette(clustering_data_1, columns_for_clustering_1, K)
+optimal_clusters_silhouette(clustering_data_2, columns_for_clustering_2, K)
+optimal_clusters_silhouette(clustering_data_3, columns_for_clustering_3, K)
 
 # Elbow mehthod
 
@@ -213,23 +214,24 @@ def optimal_clusters_elbow(clustering_data, clustering_columns, K):
         kmeans = kmeans.fit(clustering_data)
         wss_iter = kmeans.inertia_
         wss.append(wss_iter)
-        print("Wss score for k(clusters) = " + str(k) + " is "
+        print("Wss taškai, kai k(klasterių sk.) = " + str(k) + " yra "
               + str(wss_iter))
 
     mycenters = pd.DataFrame({'Clusters': K, 'WSS': wss})
     # Plot the wss scores
     plt.plot(mycenters['Clusters'], mycenters['WSS'], marker='o')
-    columns_string = ', '.join(clustering_columns)
+    columns_string = '\n'.join(clustering_columns)
     plt.xlabel('Number of clusters')
     plt.ylabel('WSS score')
+    plt.tight_layout()  # Ensure tight layout
     plt.title(
-        f'Elbow Method for Optimal Cluster Number for columns {columns_string}')
+        f'Elbow metodas optimaliam klasterių skaičiui rasti, stulpeliams: {columns_string}')
     plt.show()
 
 
-# optimal_clusters_elbow(clustering_data_1, columns_for_clustering_1, K)
-# optimal_clusters_elbow(clustering_data_2, columns_for_clustering_2, K)
-# optimal_clusters_elbow(clustering_data_3, columns_for_clustering_3, K)
+optimal_clusters_elbow(clustering_data_1, columns_for_clustering_1, K)
+optimal_clusters_elbow(clustering_data_2, columns_for_clustering_2, K)
+optimal_clusters_elbow(clustering_data_3, columns_for_clustering_3, K)
 
 
 # Dendogram
@@ -255,8 +257,8 @@ def plot_dendrogram(model, clustering_columns, lineHeight, **kwargs):
     plt.axhline(y=lineHeight, color='black', linestyle='--')
     columns_string = '\n'.join(clustering_columns)
     plt.title(
-        f"Hierarchical Clustering Dendrogram for columns {columns_string}", pad=1)
-    plt.xlabel("Number of points in node (or index of point if no parenthesis).")
+        f"Dendogramos metodas optimaliam klasterių skaičiui rasti, stulpeliams: {columns_string}", pad=1)
+    plt.xlabel("Taškų skaičius mazge (arba taško indeksas, jei nėra skliaustų).")
     plt.show()
 
 
@@ -278,7 +280,7 @@ def kmeans_clustering(data, n_clusters, title, n_neighbors, min_dist, metric):
 
     # umap_data["Cluster"] = kmeans.labels_
     # for i in np.unique(kmeans.labels_):
-    #     plot_correlation_heatmap(umap_data[umap_data["Cluster"] == i], f"Cluster {i} correlation K-Means")
+    #     plot_correlation_heatmap(umap_data[umap_data["Cluster"] == i], f"Klasterio {i} koreliacija K-Means")
 
     kmeans_df = pd.DataFrame(reduced_data_umap, columns=["x", "y"])
     kmeans_df["Cluster"] = kmeans.labels_
@@ -288,11 +290,11 @@ def kmeans_clustering(data, n_clusters, title, n_neighbors, min_dist, metric):
     fig.show()
 
 
-kmeans_clustering(clustering_data_1, 7, "UMAP Visualization - Data 1 (K-Means)",
+kmeans_clustering(clustering_data_1, 7, "UMAP Vizualicacija - 1 požymių rinkinys (K-Means)",
                   n_neighbors=data_1_params["n_neighbors"], min_dist=data_1_params["min_dist"], metric=data_1_params["metric"])
-kmeans_clustering(clustering_data_2, 10, "UMAP Visualization - Data 2 (K-Means)",
+kmeans_clustering(clustering_data_2, 10, "UMAP Vizualicacija - 2 požymių rinkinys (K-Means)",
                   n_neighbors=data_2_params["n_neighbors"], min_dist=data_2_params["min_dist"], metric=data_2_params["metric"])
-kmeans_clustering(clustering_data_3, 6, "UMAP Visualization - Data 3 (K-Means)",
+kmeans_clustering(clustering_data_3, 6, "UMAP Vizualicacija - 3 požymių rinkinys (K-Means)",
                   n_neighbors=data_3_params["n_neighbors"], min_dist=data_3_params["min_dist"], metric=data_3_params["metric"])
 
 # Hierarchical
@@ -309,7 +311,7 @@ def hierarchical_clustering(data, n_clusters, title, n_neighbors, min_dist, metr
 
     # umap_data["Cluster"] = hierarchical.labels_
     # for i in np.unique(hierarchical.labels_):
-    #     plot_correlation_heatmap(umap_data[umap_data["Cluster"] == i], f"Cluster {i} correlation Hierarchical")
+    #     plot_correlation_heatmap(umap_data[umap_data["Cluster"] == i], f"Klasterio {i} koreliacija Hierarchical")
 
     hierarchical_df["Valstybė"] = normalized_data_grouped_by_country["Entity"]
     fig = px.scatter(hierarchical_df, x="x", y="y",
@@ -318,11 +320,11 @@ def hierarchical_clustering(data, n_clusters, title, n_neighbors, min_dist, metr
 
 
 # Assuming normalized_data_grouped_by_country is defined somewhere in your code
-hierarchical_clustering(clustering_data_1, 7, "UMAP Visualization - Data 1 (Hierarchical)",
+hierarchical_clustering(clustering_data_1, 7, "UMAP Vizualicacija - 1 požymių rinkinys (Hierarchinis)",
                         n_neighbors=data_1_params["n_neighbors"], min_dist=data_1_params["min_dist"], metric=data_1_params["metric"])
-hierarchical_clustering(clustering_data_2, 12, "UMAP Visualization - Data 2 (Hierarchical)",
+hierarchical_clustering(clustering_data_2, 12, "UMAP Vizualicacija - 2 požymių rinkinys (Hierarchinis)",
                         n_neighbors=data_2_params["n_neighbors"], min_dist=data_2_params["min_dist"], metric=data_2_params["metric"])
-hierarchical_clustering(clustering_data_3, 17, "UMAP Visualization - Data 3 (Hierarchical)",
+hierarchical_clustering(clustering_data_3, 17, "UMAP Vizualicacija - 3 požymių rinkinys (Hierarchinis)",
                         n_neighbors=data_3_params["n_neighbors"], min_dist=data_3_params["min_dist"], metric=data_3_params["metric"])
 
 # DB scan clustering
@@ -349,10 +351,11 @@ def plot_umap_with_clusters(data, columns, title, eps, min_samples, n_neighbors,
     # for i in np.unique(clusters):
     #     if i != -1:
     #         plot_correlation_heatmap(
-    #             umap_data[umap_data["Cluster"] == i], f"Cluster {i} correlation DBSCAN")
+    #             umap_data[umap_data["Cluster"] == i], f"Klasterio {i} koreliacija DBSCAN")
 
     umap_df["Valstybė"] = normalized_data_grouped_by_country["Entity"]
-    print(f'Silhouette score of dbscan: {ss(umap_data, umap_df["Cluster"])}')
+    print(
+        f'Vidutinio silueto taškai iš dbscan: {ss(umap_data, umap_df["Cluster"])}')
 
     fig = px.scatter(umap_df, x="x", y="y", color="Cluster",
                      title=title, hover_name="Valstybė")
@@ -406,8 +409,8 @@ print(f'Best DBSCAN parameters for columns_for_clustering_3: {best_dict_3}')
 
 # Plot clustering results
 plot_umap_with_clusters(clustering_data_1, columns_for_clustering_1,
-                        "UMAP Visualization - Data 1 (DBSCAN)", eps=0.081, min_samples=14, n_neighbors=data_1_params["n_neighbors"], min_dist=data_1_params["min_dist"], metric=data_1_params["metric"])
+                        "UMAP Vizualizacija - 1 požymių rinkinys (DBSCAN)", eps=0.081, min_samples=14, n_neighbors=data_1_params["n_neighbors"], min_dist=data_1_params["min_dist"], metric=data_1_params["metric"])
 plot_umap_with_clusters(clustering_data_2, columns_for_clustering_2,
-                        "UMAP Visualization - Data 2 (DBSCAN)", eps=0.22, min_samples=8, n_neighbors=data_2_params["n_neighbors"], min_dist=data_2_params["min_dist"], metric=data_2_params["metric"])
+                        "UMAP Vizualizacija - 2 požymių rinkinys (DBSCAN)", eps=0.22, min_samples=8, n_neighbors=data_2_params["n_neighbors"], min_dist=data_2_params["min_dist"], metric=data_2_params["metric"])
 plot_umap_with_clusters(clustering_data_3, columns_for_clustering_3,
-                        "UMAP Visualization - Data 3 (DBSCAN)", eps=0.65, min_samples=2, n_neighbors=data_3_params["n_neighbors"], min_dist=data_3_params["min_dist"], metric=data_3_params["metric"])
+                        "UMAP Vizualizacija - 3 požymių rinkinys (DBSCAN)", eps=0.65, min_samples=2, n_neighbors=data_3_params["n_neighbors"], min_dist=data_3_params["min_dist"], metric=data_3_params["metric"])
