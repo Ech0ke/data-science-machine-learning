@@ -5,12 +5,15 @@ import umap
 import numpy as np
 from sklearn.cluster import AgglomerativeClustering
 import sklearn.cluster as cluster
-from sklearn.metrics import silhouette_score
+from sklearn.metrics import silhouette_score as ss
 import sklearn.metrics as metrics
 import matplotlib.pyplot as plt
 from scipy.cluster.hierarchy import linkage, fcluster, dendrogram
 from scipy.spatial.distance import pdist
 import seaborn as sns
+from sklearn.cluster import DBSCAN
+import itertools
+import numpy as np
 
 # Set the locale to use thousands separators
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
@@ -67,9 +70,8 @@ normalized_data_min_max[numeric_columns] = (
 
 normalized_data_min_max.to_csv('normalized.csv', index=False)
 
+
 # Adjust marker size for better visibility
-
-
 def adjust_colour_and_show(figure, title):
     figure.update_traces(marker=dict(size=5))
     figure.update_layout(title=title)
@@ -87,14 +89,14 @@ normalized_data_grouped_by_country = normalized_data_min_max.groupby(
     "Entity", as_index=False).mean()
 
 # Task 2 select columns for clustering
-columns_for_clustering_1 = [f'Access to electricity (% of population)',
-                            'Renewable energy share in the total final energy consumption (%)',
-                            'Electricity from fossil fuels (TWh)',
-                            'Electricity from nuclear (TWh)',
-                            'Electricity from renewables (TWh)']
+columns_for_clustering_1 = [
+    'Renewable energy share in the total final energy consumption (%)',
+    'Electricity from fossil fuels (TWh)',
+    'Electricity from nuclear (TWh)',
+    'Electricity from renewables (TWh)']
 
 columns_for_clustering_2 = [
-    f'Renewable energy share in the total final energy consumption (%)', 'Electricity from renewables (TWh)', 'Primary energy consumption per capita (kWh/person)', 'Value_co2_emissions_kt_by_country']
+    f'Low-carbon electricity (% electricity)', 'Electricity from renewables (TWh)', 'Primary energy consumption per capita (kWh/person)', f'Access to electricity (% of population)']
 
 columns_for_clustering_3 = [f'Access to electricity (% of population)', 'Access to clean fuels for cooking',
                             'Renewable energy share in the total final energy consumption (%)', 'Electricity from fossil fuels (TWh)',
@@ -107,9 +109,11 @@ clustering_data_1 = normalized_data_grouped_by_country[columns_for_clustering_1]
 clustering_data_2 = normalized_data_grouped_by_country[columns_for_clustering_2]
 clustering_data_3 = normalized_data_grouped_by_country[columns_for_clustering_3]
 
-# Silhouette method
+# Constant for trying different cluster numbers in finding optimal cluster count
 K = range(2, 20)
 
+
+# Silhouette method
 def optimal_clusters_silhouette(clustering_data, clustering_columns, K):
     sil_score = []
     for i in K:
@@ -193,11 +197,11 @@ def plot_dendrogram(model, clustering_columns, lineHeight, **kwargs):
 
 model = AgglomerativeClustering(distance_threshold=0, n_clusters=None)
 model = model.fit(clustering_data_1)
-# plot_dendrogram(model, columns_for_clustering_1, 0.75, truncate_mode="level")
-# model = model.fit(clustering_data_2)
-# plot_dendrogram(model, columns_for_clustering_2, 0.75, truncate_mode="level")
-# model = model.fit(clustering_data_3)
-# plot_dendrogram(model, columns_for_clustering_3, 1, truncate_mode="level")
+plot_dendrogram(model, columns_for_clustering_1, 0.75, truncate_mode="level")
+model = model.fit(clustering_data_2)
+plot_dendrogram(model, columns_for_clustering_2, 0.75, truncate_mode="level")
+model = model.fit(clustering_data_3)
+plot_dendrogram(model, columns_for_clustering_3, 1, truncate_mode="level")
 
 
 def kmeans_clustering(data, n_clusters, title):
@@ -211,47 +215,119 @@ def kmeans_clustering(data, n_clusters, title):
     fig = px.scatter(kmeans_df, x="x", y="y", color="Cluster", title=title, hover_name="Valstybė")
     fig.show()
 
-kmeans_clustering(clustering_data_1, 5, "UMAP Visualization - Data 1 (K-Means)")
-kmeans_clustering(clustering_data_2, 6, "UMAP Visualization - Data 2 (K-Means)")
+kmeans_clustering(clustering_data_1, 7, "UMAP Visualization - Data 1 (K-Means)")
+kmeans_clustering(clustering_data_2, 10, "UMAP Visualization - Data 2 (K-Means)")
 kmeans_clustering(clustering_data_3, 6, "UMAP Visualization - Data 3 (K-Means)")
 
-# # UMAP for filtered data
-# umap_data = filtered_data_grouped_by_country.drop(
-#     columns=["Entity", "Access to electricity (% of population)"])
+# DB scan clustering
+def dbscan_clustering(data, eps, min_samples):
+    X = data.to_numpy()
+    dbscan = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
 
-# reduced_data_umap = umap.UMAP(n_components=2, random_state=42).fit_transform(
-#     umap_data)
+    clusters = dbscan.labels_
+    return clusters
 
-# umap_df = pd.DataFrame(reduced_data_umap, columns=["x", "y"])
 
-# # Add back misisng columns for data visualization
-# umap_df["Valstybė"] = filtered_data_grouped_by_country["Entity"]
-# umap_df["Prieiga prie elektros (% nuo populiacijos)"] = filtered_data_grouped_by_country["Access to electricity (% of population)"]
+def plot_umap_with_clusters(data, columns, title, eps, min_samples):
+    umap_data = data
+    clusters = dbscan_clustering(umap_data, eps, min_samples)
 
-# # Use Plotly Express for interactive plotting for filtered data
-# fig_electricity_percentage = px.scatter(umap_df, x="x", y="y", range_x=[-8, 15], range_y=[-6, 8],
-#                                         color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
+    reduced_data_umap = umap.UMAP(
+        n_components=2, random_state=42).fit_transform(umap_data)
+    umap_df = pd.DataFrame(reduced_data_umap, columns=["x", "y"])
+    umap_df["Cluster"] = clusters
+    umap_df["Valstybė"] = normalized_data_grouped_by_country["Entity"]
+    print(f'Silhouette score of dbscan: {ss(umap_data, umap_df["Cluster"])}')
 
-# adjust_colour_and_show(fig_electricity_percentage, "UMAP projekcija")
+    fig = px.scatter(umap_df, x="x", y="y", color="Cluster",
+                     title=title, hover_name="Valstybė")
+    fig.show()
 
-# # UMAP for normalized data
-# umap_data_normalized = normalized_data_grouped_by_country.drop(
-#     columns=["Entity", "Access to electricity (% of population)"])
 
-# reduced_data_umap_normalized = umap.UMAP(n_components=2, random_state=42).fit_transform(
-#     umap_data_normalized)
+epsilons = np.linspace(0.01, 1, num=15)
+min_samples = np.arange(2, 20, step=3)
+combinations = list(itertools.product(epsilons, min_samples))
+N = len(combinations)
 
-# umap_df_normalized = pd.DataFrame(
-#     reduced_data_umap_normalized, columns=["x", "y"])
 
-# # Add back misisng columns for data visualization
-# umap_df_normalized["Valstybė"] = normalized_data_grouped_by_country["Entity"]
-# umap_df_normalized["Prieiga prie elektros (% nuo populiacijos)"] = normalized_data_grouped_by_country[
-#     "Access to electricity (% of population)"]
+def get_scores_and_labels(combinations, X):
+    scores = []
+    all_labels_list = []
 
-# # Use Plotly Express for interactive plotting for normalized data
-# fig_electricity_percentage_normalized = px.scatter(umap_df_normalized, x="x", y="y", range_x=[-1, 14], range_y=[-1, 14],
-#                                                    color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
+    for i, (eps, num_samples) in enumerate(combinations):
+        dbscan_cluster_model = DBSCAN(eps=eps, min_samples=num_samples).fit(X)
+        labels = dbscan_cluster_model.labels_
+        labels_set = set(labels)
+        num_clusters = len(labels_set)
+        if -1 in labels_set:
+            num_clusters -= 1
 
-# adjust_colour_and_show(fig_electricity_percentage_normalized,
-#                        "UMAP projekcija (normalizuoti duomenys)")
+        if (num_clusters < 2) or (num_clusters > 50):
+            scores.append(-10)
+            all_labels_list.append('bad')
+            c = (eps, num_samples)
+            continue
+
+        scores.append(ss(X, labels))
+        all_labels_list.append(labels)
+
+    best_index = np.argmax(scores)
+    best_parameters = combinations[best_index]
+    best_labels = all_labels_list[best_index]
+    best_score = scores[best_index]
+
+    return {'best_epsilon': best_parameters[0],
+            'best_min_samples': best_parameters[1],
+            'best_labels': best_labels,
+            'best_score': best_score}
+
+
+best_dict_1 = get_scores_and_labels(combinations, clustering_data_1.to_numpy())
+print(f'Best DBSCAN parameters for columns_for_clustering_1: {best_dict_1}')
+best_dict_2 = get_scores_and_labels(combinations, clustering_data_2.to_numpy())
+print(f'Best DBSCAN parameters for columns_for_clustering_2: {best_dict_2}')
+best_dict_3 = get_scores_and_labels(combinations, clustering_data_3.to_numpy())
+print(f'Best DBSCAN parameters for columns_for_clustering_3: {best_dict_3}')
+
+# Plot clustering results
+plot_umap_with_clusters(clustering_data_1, columns_for_clustering_1,
+                        "UMAP Visualization - Data 1", eps=0.081, min_samples=14)
+plot_umap_with_clusters(clustering_data_2, columns_for_clustering_2,
+                        "UMAP Visualization - Data 2", eps=0.22, min_samples=8)
+plot_umap_with_clusters(clustering_data_3, columns_for_clustering_3,
+                        "UMAP Visualization - Data 3", eps=0.65, min_samples=2)
+
+def plot_correlation_heatmap(data, title):
+    correlation_matrix = data.corr()
+    plt.figure(figsize=(10, 8))  # Set the figure size to your preference
+
+    plt.imshow(correlation_matrix, cmap='RdYlBu', vmin=-1, vmax=1)
+
+    # Add a colorbar
+    cbar = plt.colorbar()
+    cbar.set_label('Correlation')
+
+    # Set ticks and labels with smaller fonts
+    ticks = range(len(correlation_matrix.columns))
+    plt.xticks(ticks, correlation_matrix.columns,
+               rotation=45, fontsize=8)  # Adjust fontsize
+    plt.yticks(ticks, correlation_matrix.columns,
+               fontsize=8)  # Adjust fontsize
+
+    # Add correlation values to the heatmap
+    for i in range(len(correlation_matrix.columns)):
+        for j in range(len(correlation_matrix.columns)):
+            if i == j:
+                continue
+            plt.text(j, i, f'{correlation_matrix.iloc[i, j]:.2f}',
+                     ha='center', va='center', color='#303030', fontsize=6)  # Adjust fontsize
+
+    # Display the plot
+    plt.title(title)
+    plt.tight_layout()  # Ensure tight layout
+    plt.show()
+
+
+# plot_correlation_heatmap(clustering_data_1, "Correlation Matrix - Data 1")
+# plot_correlation_heatmap(clustering_data_2, "Correlation Matrix - Data 2")
+# plot_correlation_heatmap(clustering_data_3, "Correlation Matrix - Data 3")
