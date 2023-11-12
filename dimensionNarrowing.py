@@ -113,6 +113,37 @@ clustering_data_3 = normalized_data_grouped_by_country[columns_for_clustering_3]
 K = range(2, 20)
 
 
+def plot_correlation_heatmap(data, title):
+    data = data.drop(columns=["Cluster"])
+    correlation_matrix = data.corr()
+    plt.figure(figsize=(10, 8))  # Set the figure size to your preference
+
+    plt.imshow(correlation_matrix, cmap='RdYlBu', vmin=-1, vmax=1)
+
+    # Add a colorbar
+    cbar = plt.colorbar()
+    cbar.set_label('Correlation')
+
+    # Set ticks and labels with smaller fonts
+    ticks = range(len(correlation_matrix.columns))
+    plt.xticks(ticks, correlation_matrix.columns,
+               rotation=45, fontsize=8)  # Adjust fontsize
+    plt.yticks(ticks, correlation_matrix.columns,
+               fontsize=8)  # Adjust fontsize
+
+    # Add correlation values to the heatmap
+    for i in range(len(correlation_matrix.columns)):
+        for j in range(len(correlation_matrix.columns)):
+            if i == j:
+                continue
+            plt.text(j, i, f'{correlation_matrix.iloc[i, j]:.2f}',
+                     ha='center', va='center', color='#303030', fontsize=6)  # Adjust fontsize
+
+    # Display the plot
+    plt.title(title)
+    plt.tight_layout()  # Ensure tight layout
+    plt.show()
+
 # Silhouette method
 def optimal_clusters_silhouette(clustering_data, clustering_columns, K):
     sil_score = []
@@ -136,9 +167,9 @@ def optimal_clusters_silhouette(clustering_data, clustering_columns, K):
     plt.show()
 
 
-optimal_clusters_silhouette(clustering_data_1, columns_for_clustering_1, K)
-optimal_clusters_silhouette(clustering_data_2, columns_for_clustering_2, K)
-optimal_clusters_silhouette(clustering_data_3, columns_for_clustering_3, K)
+# optimal_clusters_silhouette(clustering_data_1, columns_for_clustering_1, K)
+# optimal_clusters_silhouette(clustering_data_2, columns_for_clustering_2, K)
+# optimal_clusters_silhouette(clustering_data_3, columns_for_clustering_3, K)
 
 # Elbow mehthod
 
@@ -164,9 +195,9 @@ def optimal_clusters_elbow(clustering_data, clustering_columns, K):
     plt.show()
 
 
-optimal_clusters_elbow(clustering_data_1, columns_for_clustering_1, K)
-optimal_clusters_elbow(clustering_data_2, columns_for_clustering_2, K)
-optimal_clusters_elbow(clustering_data_3, columns_for_clustering_3, K)
+# optimal_clusters_elbow(clustering_data_1, columns_for_clustering_1, K)
+# optimal_clusters_elbow(clustering_data_2, columns_for_clustering_2, K)
+# optimal_clusters_elbow(clustering_data_3, columns_for_clustering_3, K)
 
 
 # Dendogram
@@ -197,11 +228,11 @@ def plot_dendrogram(model, clustering_columns, lineHeight, **kwargs):
 
 model = AgglomerativeClustering(distance_threshold=0, n_clusters=None)
 model = model.fit(clustering_data_1)
-plot_dendrogram(model, columns_for_clustering_1, 0.75, truncate_mode="level")
-model = model.fit(clustering_data_2)
-plot_dendrogram(model, columns_for_clustering_2, 0.75, truncate_mode="level")
-model = model.fit(clustering_data_3)
-plot_dendrogram(model, columns_for_clustering_3, 1, truncate_mode="level")
+# plot_dendrogram(model, columns_for_clustering_1, 0.75, truncate_mode="level")
+# model = model.fit(clustering_data_2)
+# plot_dendrogram(model, columns_for_clustering_2, 0.75, truncate_mode="level")
+# model = model.fit(clustering_data_3)
+# plot_dendrogram(model, columns_for_clustering_3, 1, truncate_mode="level")
 
 
 def kmeans_clustering(data, n_clusters, title):
@@ -209,6 +240,11 @@ def kmeans_clustering(data, n_clusters, title):
     kmeans = cluster.KMeans(n_clusters= n_clusters, n_init=10, random_state=10).fit(umap_data)
     reduced_data_umap = umap.UMAP(
         n_components=2, random_state=42).fit_transform(umap_data)
+    
+    umap_data["Cluster"] = kmeans.labels_
+    for i in np.unique(kmeans.labels_):
+        plot_correlation_heatmap(umap_data[umap_data["Cluster"] == i], f"Cluster {i} correlation K-Means")
+
     kmeans_df = pd.DataFrame(reduced_data_umap, columns=["x", "y"])
     kmeans_df["Cluster"] = kmeans.labels_
     kmeans_df["Valstybė"] = normalized_data_grouped_by_country["Entity"]
@@ -216,8 +252,8 @@ def kmeans_clustering(data, n_clusters, title):
     fig.show()
 
 kmeans_clustering(clustering_data_1, 7, "UMAP Visualization - Data 1 (K-Means)")
-kmeans_clustering(clustering_data_2, 10, "UMAP Visualization - Data 2 (K-Means)")
-kmeans_clustering(clustering_data_3, 6, "UMAP Visualization - Data 3 (K-Means)")
+# kmeans_clustering(clustering_data_2, 10, "UMAP Visualization - Data 2 (K-Means)")
+# kmeans_clustering(clustering_data_3, 6, "UMAP Visualization - Data 3 (K-Means)")
 
 # DB scan clustering
 def dbscan_clustering(data, eps, min_samples):
@@ -228,7 +264,7 @@ def dbscan_clustering(data, eps, min_samples):
     return clusters
 
 
-def plot_umap_with_clusters(data, columns, title, eps, min_samples):
+def plot_umap_with_clusters(data, title, eps, min_samples):
     umap_data = data
     clusters = dbscan_clustering(umap_data, eps, min_samples)
 
@@ -236,6 +272,12 @@ def plot_umap_with_clusters(data, columns, title, eps, min_samples):
         n_components=2, random_state=42).fit_transform(umap_data)
     umap_df = pd.DataFrame(reduced_data_umap, columns=["x", "y"])
     umap_df["Cluster"] = clusters
+    umap_data["Cluster"] = clusters
+
+    for i in np.unique(clusters):
+        if i != -1:
+            plot_correlation_heatmap(umap_data[umap_data["Cluster"] == i], f"Cluster {i} correlation DBSCAN")
+
     umap_df["Valstybė"] = normalized_data_grouped_by_country["Entity"]
     print(f'Silhouette score of dbscan: {ss(umap_data, umap_df["Cluster"])}')
 
@@ -290,43 +332,9 @@ best_dict_3 = get_scores_and_labels(combinations, clustering_data_3.to_numpy())
 print(f'Best DBSCAN parameters for columns_for_clustering_3: {best_dict_3}')
 
 # Plot clustering results
-plot_umap_with_clusters(clustering_data_1, columns_for_clustering_1,
-                        "UMAP Visualization - Data 1", eps=0.081, min_samples=14)
-plot_umap_with_clusters(clustering_data_2, columns_for_clustering_2,
-                        "UMAP Visualization - Data 2", eps=0.22, min_samples=8)
-plot_umap_with_clusters(clustering_data_3, columns_for_clustering_3,
-                        "UMAP Visualization - Data 3", eps=0.65, min_samples=2)
-
-def plot_correlation_heatmap(data, title):
-    correlation_matrix = data.corr()
-    plt.figure(figsize=(10, 8))  # Set the figure size to your preference
-
-    plt.imshow(correlation_matrix, cmap='RdYlBu', vmin=-1, vmax=1)
-
-    # Add a colorbar
-    cbar = plt.colorbar()
-    cbar.set_label('Correlation')
-
-    # Set ticks and labels with smaller fonts
-    ticks = range(len(correlation_matrix.columns))
-    plt.xticks(ticks, correlation_matrix.columns,
-               rotation=45, fontsize=8)  # Adjust fontsize
-    plt.yticks(ticks, correlation_matrix.columns,
-               fontsize=8)  # Adjust fontsize
-
-    # Add correlation values to the heatmap
-    for i in range(len(correlation_matrix.columns)):
-        for j in range(len(correlation_matrix.columns)):
-            if i == j:
-                continue
-            plt.text(j, i, f'{correlation_matrix.iloc[i, j]:.2f}',
-                     ha='center', va='center', color='#303030', fontsize=6)  # Adjust fontsize
-
-    # Display the plot
-    plt.title(title)
-    plt.tight_layout()  # Ensure tight layout
-    plt.show()
-
+# plot_umap_with_clusters(clustering_data_1, "UMAP Visualization - Data 1", eps=0.081, min_samples=14)
+# plot_umap_with_clusters(clustering_data_2, "UMAP Visualization - Data 2", eps=0.22, min_samples=8)
+# plot_umap_with_clusters(clustering_data_3, "UMAP Visualization - Data 3", eps=0.65, min_samples=2)
 
 # plot_correlation_heatmap(clustering_data_1, "Correlation Matrix - Data 1")
 # plot_correlation_heatmap(clustering_data_2, "Correlation Matrix - Data 2")
