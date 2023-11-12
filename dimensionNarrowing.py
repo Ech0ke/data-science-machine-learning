@@ -112,8 +112,28 @@ clustering_data_3 = normalized_data_grouped_by_country[columns_for_clustering_3]
 # Constant for trying different cluster numbers in finding optimal cluster count
 K = range(2, 20)
 
+# UMAP global parameters
+data_1_params = {
+    "min_dist": 0.1,
+    "n_neighbors": 11,
+    "metric": "manhattan",
+}
+
+data_2_params = {
+    "min_dist": 0.06,
+    "n_neighbors": 11,
+    "metric": "euclidean",
+}
+
+data_3_params = {
+    "min_dist": 0.1,
+    "n_neighbors": 11,
+    "metric": "chebyshev",
+}
 
 # Silhouette method
+
+
 def optimal_clusters_silhouette(clustering_data, clustering_columns, K):
     sil_score = []
     for i in K:
@@ -141,6 +161,7 @@ optimal_clusters_silhouette(clustering_data_2, columns_for_clustering_2, K)
 optimal_clusters_silhouette(clustering_data_3, columns_for_clustering_3, K)
 
 # Elbow mehthod
+
 
 def optimal_clusters_elbow(clustering_data, clustering_columns, K):
     wss = []
@@ -191,9 +212,11 @@ def plot_dendrogram(model, clustering_columns, lineHeight, **kwargs):
     dendrogram(linkage_matrix, **kwargs)
     plt.axhline(y=lineHeight, color='black', linestyle='--')
     columns_string = '\n'.join(clustering_columns)
-    plt.title(f"Hierarchical Clustering Dendrogram for columns {columns_string}", pad=1)
+    plt.title(
+        f"Hierarchical Clustering Dendrogram for columns {columns_string}", pad=1)
     plt.xlabel("Number of points in node (or index of point if no parenthesis).")
     plt.show()
+
 
 model = AgglomerativeClustering(distance_threshold=0, n_clusters=None)
 model = model.fit(clustering_data_1)
@@ -204,39 +227,55 @@ model = model.fit(clustering_data_3)
 plot_dendrogram(model, columns_for_clustering_3, 1, truncate_mode="level")
 
 
-def kmeans_clustering(data, n_clusters, title):
+def kmeans_clustering(data, n_clusters, title, n_neighbors, min_dist, metric):
     umap_data = data
-    kmeans = cluster.KMeans(n_clusters= n_clusters, n_init=10, random_state=10).fit(umap_data)
+    kmeans = cluster.KMeans(n_clusters=n_clusters,
+                            n_init=10, random_state=10).fit(umap_data)
     reduced_data_umap = umap.UMAP(
-        n_components=2, random_state=42).fit_transform(umap_data)
+        n_components=2, random_state=42, n_neighbors=n_neighbors, min_dist=min_dist, metric=metric).fit_transform(umap_data)
     kmeans_df = pd.DataFrame(reduced_data_umap, columns=["x", "y"])
     kmeans_df["Cluster"] = kmeans.labels_
     kmeans_df["Valstybė"] = normalized_data_grouped_by_country["Entity"]
-    fig = px.scatter(kmeans_df, x="x", y="y", color="Cluster", title=title, hover_name="Valstybė")
+    fig = px.scatter(kmeans_df, x="x", y="y", color="Cluster",
+                     title=title, hover_name="Valstybė")
     fig.show()
 
-kmeans_clustering(clustering_data_1, 7, "UMAP Visualization - Data 1 (K-Means)")
-kmeans_clustering(clustering_data_2, 10, "UMAP Visualization - Data 2 (K-Means)")
-kmeans_clustering(clustering_data_3, 6, "UMAP Visualization - Data 3 (K-Means)")
+
+kmeans_clustering(clustering_data_1, 7, "UMAP Visualization - Data 1 (K-Means)",
+                  n_neighbors=data_1_params["n_neighbors"], min_dist=data_1_params["min_dist"], metric=data_1_params["metric"])
+kmeans_clustering(clustering_data_2, 10, "UMAP Visualization - Data 2 (K-Means)",
+                  n_neighbors=data_2_params["n_neighbors"], min_dist=data_2_params["min_dist"], metric=data_2_params["metric"])
+kmeans_clustering(clustering_data_3, 6, "UMAP Visualization - Data 3 (K-Means)",
+                  n_neighbors=data_3_params["n_neighbors"], min_dist=data_3_params["min_dist"], metric=data_3_params["metric"])
 
 # Hierarchical
-def hierarchical_clustering(data, n_clusters, title):
+
+
+def hierarchical_clustering(data, n_clusters, title, n_neighbors, min_dist, metric):
     umap_data = data
-    hierarchical = AgglomerativeClustering(n_clusters=n_clusters).fit(umap_data)
+    hierarchical = AgglomerativeClustering(
+        n_clusters=n_clusters).fit(umap_data)
     reduced_data_umap = umap.UMAP(
-        n_components=2, random_state=42).fit_transform(umap_data)
+        n_components=2, random_state=42, n_neighbors=n_neighbors, min_dist=min_dist, metric=metric).fit_transform(umap_data)
     hierarchical_df = pd.DataFrame(reduced_data_umap, columns=["x", "y"])
     hierarchical_df["Cluster"] = hierarchical.labels_
     hierarchical_df["Valstybė"] = normalized_data_grouped_by_country["Entity"]
-    fig = px.scatter(hierarchical_df, x="x", y="y", color="Cluster", title=title, hover_name="Valstybė")
+    fig = px.scatter(hierarchical_df, x="x", y="y",
+                     color="Cluster", title=title, hover_name="Valstybė")
     fig.show()
 
+
 # Assuming normalized_data_grouped_by_country is defined somewhere in your code
-hierarchical_clustering(clustering_data_1, 7, "UMAP Visualization - Data 1 (Hierarchical)")
-hierarchical_clustering(clustering_data_2, 12, "UMAP Visualization - Data 2 (Hierarchical)")
-hierarchical_clustering(clustering_data_3, 17, "UMAP Visualization - Data 3 (Hierarchical)")
+hierarchical_clustering(clustering_data_1, 7, "UMAP Visualization - Data 1 (Hierarchical)",
+                        n_neighbors=data_1_params["n_neighbors"], min_dist=data_1_params["min_dist"], metric=data_1_params["metric"])
+hierarchical_clustering(clustering_data_2, 12, "UMAP Visualization - Data 2 (Hierarchical)",
+                        n_neighbors=data_2_params["n_neighbors"], min_dist=data_2_params["min_dist"], metric=data_2_params["metric"])
+hierarchical_clustering(clustering_data_3, 17, "UMAP Visualization - Data 3 (Hierarchical)",
+                        n_neighbors=data_3_params["n_neighbors"], min_dist=data_3_params["min_dist"], metric=data_3_params["metric"])
 
 # DB scan clustering
+
+
 def dbscan_clustering(data, eps, min_samples):
     X = data.to_numpy()
     dbscan = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
@@ -245,12 +284,12 @@ def dbscan_clustering(data, eps, min_samples):
     return clusters
 
 
-def plot_umap_with_clusters(data, columns, title, eps, min_samples):
+def plot_umap_with_clusters(data, columns, title, eps, min_samples, n_neighbors, min_dist, metric):
     umap_data = data
     clusters = dbscan_clustering(umap_data, eps, min_samples)
 
     reduced_data_umap = umap.UMAP(
-        n_components=2, random_state=42).fit_transform(umap_data)
+        n_components=2, random_state=42, n_neighbors=n_neighbors, min_dist=min_dist, metric=metric).fit_transform(umap_data)
     umap_df = pd.DataFrame(reduced_data_umap, columns=["x", "y"])
     umap_df["Cluster"] = clusters
     umap_df["Valstybė"] = normalized_data_grouped_by_country["Entity"]
@@ -308,11 +347,12 @@ print(f'Best DBSCAN parameters for columns_for_clustering_3: {best_dict_3}')
 
 # Plot clustering results
 plot_umap_with_clusters(clustering_data_1, columns_for_clustering_1,
-                        "UMAP Visualization - Data 1", eps=0.081, min_samples=14)
+                        "UMAP Visualization - Data 1 (DBSCAN)", eps=0.081, min_samples=14, n_neighbors=data_1_params["n_neighbors"], min_dist=data_1_params["min_dist"], metric=data_1_params["metric"])
 plot_umap_with_clusters(clustering_data_2, columns_for_clustering_2,
-                        "UMAP Visualization - Data 2", eps=0.22, min_samples=8)
+                        "UMAP Visualization - Data 2 (DBSCAN)", eps=0.22, min_samples=8, n_neighbors=data_2_params["n_neighbors"], min_dist=data_2_params["min_dist"], metric=data_2_params["metric"])
 plot_umap_with_clusters(clustering_data_3, columns_for_clustering_3,
-                        "UMAP Visualization - Data 3", eps=0.65, min_samples=2)
+                        "UMAP Visualization - Data 3 (DBSCAN)", eps=0.65, min_samples=2, n_neighbors=data_3_params["n_neighbors"], min_dist=data_3_params["min_dist"], metric=data_3_params["metric"])
+
 
 def plot_correlation_heatmap(data, title):
     correlation_matrix = data.corr()
