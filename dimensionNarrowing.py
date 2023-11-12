@@ -219,6 +219,23 @@ kmeans_clustering(clustering_data_1, 7, "UMAP Visualization - Data 1 (K-Means)")
 kmeans_clustering(clustering_data_2, 10, "UMAP Visualization - Data 2 (K-Means)")
 kmeans_clustering(clustering_data_3, 6, "UMAP Visualization - Data 3 (K-Means)")
 
+# Hierarchical
+def hierarchical_clustering(data, n_clusters, title):
+    umap_data = data
+    hierarchical = AgglomerativeClustering(n_clusters=n_clusters).fit(umap_data)
+    reduced_data_umap = umap.UMAP(
+        n_components=2, random_state=42).fit_transform(umap_data)
+    hierarchical_df = pd.DataFrame(reduced_data_umap, columns=["x", "y"])
+    hierarchical_df["Cluster"] = hierarchical.labels_
+    hierarchical_df["Valstybė"] = normalized_data_grouped_by_country["Entity"]
+    fig = px.scatter(hierarchical_df, x="x", y="y", color="Cluster", title=title, hover_name="Valstybė")
+    fig.show()
+
+# Assuming normalized_data_grouped_by_country is defined somewhere in your code
+hierarchical_clustering(clustering_data_1, 7, "UMAP Visualization - Data 1 (Hierarchical)")
+hierarchical_clustering(clustering_data_2, 12, "UMAP Visualization - Data 2 (Hierarchical)")
+hierarchical_clustering(clustering_data_3, 17, "UMAP Visualization - Data 3 (Hierarchical)")
+
 # DB scan clustering
 def dbscan_clustering(data, eps, min_samples):
     X = data.to_numpy()
