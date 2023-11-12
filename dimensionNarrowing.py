@@ -133,7 +133,8 @@ data_3_params = {
 
 
 def plot_correlation_heatmap(data, title):
-    data = data.drop(columns=["Cluster"])
+    if "Cluster" in data.columns:
+        data.drop(columns=["Cluster"], inplace=True)
     correlation_matrix = data.corr()
     plt.figure(figsize=(10, 8))  # Set the figure size to your preference
 
@@ -146,7 +147,7 @@ def plot_correlation_heatmap(data, title):
     # Set ticks and labels with smaller fonts
     ticks = range(len(correlation_matrix.columns))
     plt.xticks(ticks, correlation_matrix.columns,
-               rotation=45, fontsize=8)  # Adjust fontsize
+               rotation=90, fontsize=8)  # Adjust fontsize
     plt.yticks(ticks, correlation_matrix.columns,
                fontsize=8)  # Adjust fontsize
 
@@ -162,6 +163,15 @@ def plot_correlation_heatmap(data, title):
     plt.title(title)
     plt.tight_layout()  # Ensure tight layout
     plt.show()
+
+
+# Correlation matrixes for data sets
+plot_correlation_heatmap(
+    clustering_data_1, "Koreliacijos matrica 1 duomenų rinkiniui")
+plot_correlation_heatmap(
+    clustering_data_2, "Koreliacijos matrica 2 duomenų rinkiniui")
+plot_correlation_heatmap(
+    clustering_data_3, "Koreliacijos matrica 3 duomenų rinkiniui")
 
 # Silhouette method
 
@@ -336,10 +346,10 @@ def plot_umap_with_clusters(data, columns, title, eps, min_samples, n_neighbors,
     umap_df["Cluster"] = clusters
     umap_data["Cluster"] = clusters
 
-    for i in np.unique(clusters):
-        if i != -1:
-            plot_correlation_heatmap(
-                umap_data[umap_data["Cluster"] == i], f"Cluster {i} correlation DBSCAN")
+    # for i in np.unique(clusters):
+    #     if i != -1:
+    #         plot_correlation_heatmap(
+    #             umap_data[umap_data["Cluster"] == i], f"Cluster {i} correlation DBSCAN")
 
     umap_df["Valstybė"] = normalized_data_grouped_by_country["Entity"]
     print(f'Silhouette score of dbscan: {ss(umap_data, umap_df["Cluster"])}')
