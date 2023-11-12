@@ -8,7 +8,7 @@ import sklearn.cluster as cluster
 from sklearn.metrics import silhouette_score as ss
 import sklearn.metrics as metrics
 import matplotlib.pyplot as plt
-from scipy.cluster.hierarchy import linkage, fcluster
+from scipy.cluster.hierarchy import linkage, fcluster, dendrogram
 from scipy.spatial.distance import pdist
 import seaborn as sns
 from sklearn.cluster import DBSCAN
@@ -94,14 +94,8 @@ columns_for_clustering_1 = [
     'Electricity from fossil fuels (TWh)',
     'Electricity from nuclear (TWh)',
     'Electricity from renewables (TWh)']
-columns_for_clustering_1 = [
-    'Renewable energy share in the total final energy consumption (%)',
-    'Electricity from fossil fuels (TWh)',
-    'Electricity from nuclear (TWh)',
-    'Electricity from renewables (TWh)']
 
 columns_for_clustering_2 = [
-    f'Low-carbon electricity (% electricity)', 'Electricity from renewables (TWh)', 'Primary energy consumption per capita (kWh/person)', f'Access to electricity (% of population)']
     f'Low-carbon electricity (% electricity)', 'Electricity from renewables (TWh)', 'Primary energy consumption per capita (kWh/person)', f'Access to electricity (% of population)']
 
 columns_for_clustering_3 = [f'Access to electricity (% of population)', 'Access to clean fuels for cooking',
@@ -148,7 +142,6 @@ optimal_clusters_silhouette(clustering_data_3, columns_for_clustering_3, K)
 
 # Elbow mehthod
 
-
 def optimal_clusters_elbow(clustering_data, clustering_columns, K):
     wss = []
     for k in K:
@@ -175,8 +168,56 @@ optimal_clusters_elbow(clustering_data_1, columns_for_clustering_1, K)
 optimal_clusters_elbow(clustering_data_2, columns_for_clustering_2, K)
 optimal_clusters_elbow(clustering_data_3, columns_for_clustering_3, K)
 
-# Task 4 data clustering
 
+# Dendogram
+def plot_dendrogram(model, clustering_columns, lineHeight, **kwargs):
+    # Create linkage matrix and then plot the dendrogram
+    # create the counts of samples under each node
+    counts = np.zeros(model.children_.shape[0])
+    n_samples = len(model.labels_)
+    for i, merge in enumerate(model.children_):
+        current_count = 0
+        for child_idx in merge:
+            if child_idx < n_samples:
+                current_count += 1  # leaf node
+            else:
+                current_count += counts[child_idx - n_samples]
+        counts[i] = current_count
+
+    linkage_matrix = np.column_stack(
+        [model.children_, model.distances_, counts]
+    ).astype(float)
+
+    dendrogram(linkage_matrix, **kwargs)
+    plt.axhline(y=lineHeight, color='black', linestyle='--')
+    columns_string = '\n'.join(clustering_columns)
+    plt.title(f"Hierarchical Clustering Dendrogram for columns {columns_string}", pad=1)
+    plt.xlabel("Number of points in node (or index of point if no parenthesis).")
+    plt.show()
+
+model = AgglomerativeClustering(distance_threshold=0, n_clusters=None)
+model = model.fit(clustering_data_1)
+plot_dendrogram(model, columns_for_clustering_1, 0.75, truncate_mode="level")
+model = model.fit(clustering_data_2)
+plot_dendrogram(model, columns_for_clustering_2, 0.75, truncate_mode="level")
+model = model.fit(clustering_data_3)
+plot_dendrogram(model, columns_for_clustering_3, 1, truncate_mode="level")
+
+
+def kmeans_clustering(data, n_clusters, title):
+    umap_data = data
+    kmeans = cluster.KMeans(n_clusters= n_clusters, n_init=10, random_state=10).fit(umap_data)
+    reduced_data_umap = umap.UMAP(
+        n_components=2, random_state=42).fit_transform(umap_data)
+    kmeans_df = pd.DataFrame(reduced_data_umap, columns=["x", "y"])
+    kmeans_df["Cluster"] = kmeans.labels_
+    kmeans_df["Valstybė"] = normalized_data_grouped_by_country["Entity"]
+    fig = px.scatter(kmeans_df, x="x", y="y", color="Cluster", title=title, hover_name="Valstybė")
+    fig.show()
+
+kmeans_clustering(clustering_data_1, 7, "UMAP Visualization - Data 1 (K-Means)")
+kmeans_clustering(clustering_data_2, 10, "UMAP Visualization - Data 2 (K-Means)")
+kmeans_clustering(clustering_data_3, 6, "UMAP Visualization - Data 3 (K-Means)")
 
 # DB scan clustering
 def dbscan_clustering(data, eps, min_samples):
@@ -248,7 +289,7 @@ print(f'Best DBSCAN parameters for columns_for_clustering_2: {best_dict_2}')
 best_dict_3 = get_scores_and_labels(combinations, clustering_data_3.to_numpy())
 print(f'Best DBSCAN parameters for columns_for_clustering_3: {best_dict_3}')
 
-# # Plot clustering results
+# Plot clustering results
 plot_umap_with_clusters(clustering_data_1, columns_for_clustering_1,
                         "UMAP Visualization - Data 1", eps=0.081, min_samples=14)
 plot_umap_with_clusters(clustering_data_2, columns_for_clustering_2,
@@ -287,6 +328,6 @@ def plot_correlation_heatmap(data, title):
     plt.show()
 
 
-plot_correlation_heatmap(clustering_data_1, "Correlation Matrix - Data 1")
-plot_correlation_heatmap(clustering_data_2, "Correlation Matrix - Data 2")
-plot_correlation_heatmap(clustering_data_3, "Correlation Matrix - Data 3")
+# plot_correlation_heatmap(clustering_data_1, "Correlation Matrix - Data 1")
+# plot_correlation_heatmap(clustering_data_2, "Correlation Matrix - Data 2")
+# plot_correlation_heatmap(clustering_data_3, "Correlation Matrix - Data 3")
