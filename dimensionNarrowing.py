@@ -193,11 +193,11 @@ def plot_dendrogram(model, clustering_columns, lineHeight, **kwargs):
 
 model = AgglomerativeClustering(distance_threshold=0, n_clusters=None)
 model = model.fit(clustering_data_1)
-# plot_dendrogram(model, columns_for_clustering_1, 0.75, truncate_mode="level")
-# model = model.fit(clustering_data_2)
-# plot_dendrogram(model, columns_for_clustering_2, 0.75, truncate_mode="level")
-# model = model.fit(clustering_data_3)
-# plot_dendrogram(model, columns_for_clustering_3, 1, truncate_mode="level")
+plot_dendrogram(model, columns_for_clustering_1, 0.75, truncate_mode="level")
+model = model.fit(clustering_data_2)
+plot_dendrogram(model, columns_for_clustering_2, 0.75, truncate_mode="level")
+model = model.fit(clustering_data_3)
+plot_dendrogram(model, columns_for_clustering_3, 1, truncate_mode="level")
 
 
 def kmeans_clustering(data, n_clusters, title):
@@ -229,9 +229,9 @@ def hierarchical_clustering(data, n_clusters, title):
     fig.show()
 
 # Assuming normalized_data_grouped_by_country is defined somewhere in your code
-hierarchical_clustering(clustering_data_1, 5, "UMAP Visualization - Data 1 (Hierarchical)")
-hierarchical_clustering(clustering_data_2, 6, "UMAP Visualization - Data 2 (Hierarchical)")
-hierarchical_clustering(clustering_data_3, 6, "UMAP Visualization - Data 3 (Hierarchical)")
+hierarchical_clustering(clustering_data_1, 11, "UMAP Visualization - Data 1 (Hierarchical)")
+hierarchical_clustering(clustering_data_2, 8, "UMAP Visualization - Data 2 (Hierarchical)")
+hierarchical_clustering(clustering_data_3, 17, "UMAP Visualization - Data 3 (Hierarchical)")
 
 
 # # UMAP for filtered data
