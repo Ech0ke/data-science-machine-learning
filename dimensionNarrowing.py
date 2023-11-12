@@ -88,14 +88,14 @@ normalized_data_grouped_by_country = normalized_data_min_max.groupby(
     "Entity", as_index=False).mean()
 
 # Task 2 select columns for clustering
-columns_for_clustering_1 = [f'Access to electricity (% of population)',
-                            'Renewable energy share in the total final energy consumption (%)',
-                            'Electricity from fossil fuels (TWh)',
-                            'Electricity from nuclear (TWh)',
-                            'Electricity from renewables (TWh)']
+columns_for_clustering_1 = [
+    'Renewable energy share in the total final energy consumption (%)',
+    'Electricity from fossil fuels (TWh)',
+    'Electricity from nuclear (TWh)',
+    'Electricity from renewables (TWh)']
 
 columns_for_clustering_2 = [
-    f'Renewable energy share in the total final energy consumption (%)', 'Electricity from renewables (TWh)', 'Primary energy consumption per capita (kWh/person)', 'Value_co2_emissions_kt_by_country']
+    f'Low-carbon electricity (% electricity)', 'Electricity from renewables (TWh)', 'Primary energy consumption per capita (kWh/person)', f'Access to electricity (% of population)']
 
 columns_for_clustering_3 = [f'Access to electricity (% of population)', 'Access to clean fuels for cooking',
                             'Renewable energy share in the total final energy consumption (%)', 'Electricity from fossil fuels (TWh)',
@@ -188,9 +188,11 @@ def plot_umap_with_clusters(data, columns, title, eps, min_samples):
         n_components=2, random_state=42).fit_transform(umap_data)
     umap_df = pd.DataFrame(reduced_data_umap, columns=["x", "y"])
     umap_df["Cluster"] = clusters
+    umap_df["Valstybė"] = normalized_data_grouped_by_country["Entity"]
     print(f'Silhouette score of dbscan: {ss(umap_data, umap_df["Cluster"])}')
 
-    fig = px.scatter(umap_df, x="x", y="y", color="Cluster", title=title)
+    fig = px.scatter(umap_df, x="x", y="y", color="Cluster",
+                     title=title, hover_name="Valstybė")
     fig.show()
 
 
@@ -241,49 +243,8 @@ print(f'Best DBSCAN parameters for columns_for_clustering_3: {best_dict_3}')
 
 # # Plot clustering results
 plot_umap_with_clusters(clustering_data_1, columns_for_clustering_1,
-                        "UMAP Visualization - Data 1", eps=0.22, min_samples=14)
+                        "UMAP Visualization - Data 1", eps=0.081, min_samples=14)
 plot_umap_with_clusters(clustering_data_2, columns_for_clustering_2,
-                        "UMAP Visualization - Data 2", eps=0.08, min_samples=11)
+                        "UMAP Visualization - Data 2", eps=0.22, min_samples=8)
 plot_umap_with_clusters(clustering_data_3, columns_for_clustering_3,
                         "UMAP Visualization - Data 3", eps=0.65, min_samples=2)
-
-# # UMAP for filtered data
-# umap_data = filtered_data_grouped_by_country.drop(
-#     columns=["Entity", "Access to electricity (% of population)"])
-
-# reduced_data_umap = umap.UMAP(n_components=2, random_state=42).fit_transform(
-#     umap_data)
-
-# umap_df = pd.DataFrame(reduced_data_umap, columns=["x", "y"])
-
-# # Add back misisng columns for data visualization
-# umap_df["Valstybė"] = filtered_data_grouped_by_country["Entity"]
-# umap_df["Prieiga prie elektros (% nuo populiacijos)"] = filtered_data_grouped_by_country["Access to electricity (% of population)"]
-
-# # Use Plotly Express for interactive plotting for filtered data
-# fig_electricity_percentage = px.scatter(umap_df, x="x", y="y", range_x=[-8, 15], range_y=[-6, 8],
-#                                         color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
-
-# adjust_colour_and_show(fig_electricity_percentage, "UMAP projekcija")
-
-# # UMAP for normalized data
-# umap_data_normalized = normalized_data_grouped_by_country.drop(
-#     columns=["Entity", "Access to electricity (% of population)"])
-
-# reduced_data_umap_normalized = umap.UMAP(n_components=2, random_state=42).fit_transform(
-#     umap_data_normalized)
-
-# umap_df_normalized = pd.DataFrame(
-#     reduced_data_umap_normalized, columns=["x", "y"])
-
-# # Add back misisng columns for data visualization
-# umap_df_normalized["Valstybė"] = normalized_data_grouped_by_country["Entity"]
-# umap_df_normalized["Prieiga prie elektros (% nuo populiacijos)"] = normalized_data_grouped_by_country[
-#     "Access to electricity (% of population)"]
-
-# # Use Plotly Express for interactive plotting for normalized data
-# fig_electricity_percentage_normalized = px.scatter(umap_df_normalized, x="x", y="y", range_x=[-1, 14], range_y=[-1, 14],
-#                                                    color="Prieiga prie elektros (% nuo populiacijos)", hover_name="Valstybė")
-
-# adjust_colour_and_show(fig_electricity_percentage_normalized,
-#                        "UMAP projekcija (normalizuoti duomenys)")
