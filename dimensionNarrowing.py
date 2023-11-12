@@ -2,6 +2,7 @@ import pandas as pd
 import plotly.express as px
 import locale
 import umap
+import numpy as np
 from sklearn.cluster import AgglomerativeClustering
 import sklearn.cluster as cluster
 from sklearn.metrics import silhouette_score as ss
@@ -93,8 +94,14 @@ columns_for_clustering_1 = [
     'Electricity from fossil fuels (TWh)',
     'Electricity from nuclear (TWh)',
     'Electricity from renewables (TWh)']
+columns_for_clustering_1 = [
+    'Renewable energy share in the total final energy consumption (%)',
+    'Electricity from fossil fuels (TWh)',
+    'Electricity from nuclear (TWh)',
+    'Electricity from renewables (TWh)']
 
 columns_for_clustering_2 = [
+    f'Low-carbon electricity (% electricity)', 'Electricity from renewables (TWh)', 'Primary energy consumption per capita (kWh/person)', f'Access to electricity (% of population)']
     f'Low-carbon electricity (% electricity)', 'Electricity from renewables (TWh)', 'Primary energy consumption per capita (kWh/person)', f'Access to electricity (% of population)']
 
 columns_for_clustering_3 = [f'Access to electricity (% of population)', 'Access to clean fuels for cooking',
@@ -248,3 +255,38 @@ plot_umap_with_clusters(clustering_data_2, columns_for_clustering_2,
                         "UMAP Visualization - Data 2", eps=0.22, min_samples=8)
 plot_umap_with_clusters(clustering_data_3, columns_for_clustering_3,
                         "UMAP Visualization - Data 3", eps=0.65, min_samples=2)
+
+def plot_correlation_heatmap(data, title):
+    correlation_matrix = data.corr()
+    plt.figure(figsize=(10, 8))  # Set the figure size to your preference
+
+    plt.imshow(correlation_matrix, cmap='RdYlBu', vmin=-1, vmax=1)
+
+    # Add a colorbar
+    cbar = plt.colorbar()
+    cbar.set_label('Correlation')
+
+    # Set ticks and labels with smaller fonts
+    ticks = range(len(correlation_matrix.columns))
+    plt.xticks(ticks, correlation_matrix.columns,
+               rotation=45, fontsize=8)  # Adjust fontsize
+    plt.yticks(ticks, correlation_matrix.columns,
+               fontsize=8)  # Adjust fontsize
+
+    # Add correlation values to the heatmap
+    for i in range(len(correlation_matrix.columns)):
+        for j in range(len(correlation_matrix.columns)):
+            if i == j:
+                continue
+            plt.text(j, i, f'{correlation_matrix.iloc[i, j]:.2f}',
+                     ha='center', va='center', color='#303030', fontsize=6)  # Adjust fontsize
+
+    # Display the plot
+    plt.title(title)
+    plt.tight_layout()  # Ensure tight layout
+    plt.show()
+
+
+plot_correlation_heatmap(clustering_data_1, "Correlation Matrix - Data 1")
+plot_correlation_heatmap(clustering_data_2, "Correlation Matrix - Data 2")
+plot_correlation_heatmap(clustering_data_3, "Correlation Matrix - Data 3")
