@@ -131,6 +131,7 @@ data_3_params = {
     "metric": "chebyshev",
 }
 
+
 def plot_correlation_heatmap(data, title):
     data = data.drop(columns=["Cluster"])
     correlation_matrix = data.corr()
@@ -264,7 +265,7 @@ def kmeans_clustering(data, n_clusters, title, n_neighbors, min_dist, metric):
                             n_init=10, random_state=10).fit(umap_data)
     reduced_data_umap = umap.UMAP(
         n_components=2, random_state=42, n_neighbors=n_neighbors, min_dist=min_dist, metric=metric).fit_transform(umap_data)
-    
+
     # umap_data["Cluster"] = kmeans.labels_
     # for i in np.unique(kmeans.labels_):
     #     plot_correlation_heatmap(umap_data[umap_data["Cluster"] == i], f"Cluster {i} correlation K-Means")
@@ -305,9 +306,6 @@ def hierarchical_clustering(data, n_clusters, title, n_neighbors, min_dist, metr
                      color="Cluster", title=title, hover_name="Valstybė")
     fig.show()
 
-kmeans_clustering(clustering_data_1, 7, "UMAP Visualization - Data 1 (K-Means)")
-kmeans_clustering(clustering_data_2, 10, "UMAP Visualization - Data 2 (K-Means)")
-kmeans_clustering(clustering_data_3, 6, "UMAP Visualization - Data 3 (K-Means)")
 
 # Assuming normalized_data_grouped_by_country is defined somewhere in your code
 hierarchical_clustering(clustering_data_1, 7, "UMAP Visualization - Data 1 (Hierarchical)",
@@ -338,9 +336,10 @@ def plot_umap_with_clusters(data, columns, title, eps, min_samples, n_neighbors,
     umap_df["Cluster"] = clusters
     umap_data["Cluster"] = clusters
 
-    # for i in np.unique(clusters):
-    #     if i != -1:
-    #         plot_correlation_heatmap(umap_data[umap_data["Cluster"] == i], f"Cluster {i} correlation DBSCAN")
+    for i in np.unique(clusters):
+        if i != -1:
+            plot_correlation_heatmap(
+                umap_data[umap_data["Cluster"] == i], f"Cluster {i} correlation DBSCAN")
 
     umap_df["Valstybė"] = normalized_data_grouped_by_country["Entity"]
     print(f'Silhouette score of dbscan: {ss(umap_data, umap_df["Cluster"])}')
