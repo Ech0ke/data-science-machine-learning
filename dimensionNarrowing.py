@@ -193,12 +193,27 @@ def plot_dendrogram(model, clustering_columns, lineHeight, **kwargs):
 
 model = AgglomerativeClustering(distance_threshold=0, n_clusters=None)
 model = model.fit(clustering_data_1)
-plot_dendrogram(model, columns_for_clustering_1, 0.75, truncate_mode="level")
-model = model.fit(clustering_data_2)
-plot_dendrogram(model, columns_for_clustering_2, 0.75, truncate_mode="level")
-model = model.fit(clustering_data_3)
-plot_dendrogram(model, columns_for_clustering_3, 1, truncate_mode="level")
+# plot_dendrogram(model, columns_for_clustering_1, 0.75, truncate_mode="level")
+# model = model.fit(clustering_data_2)
+# plot_dendrogram(model, columns_for_clustering_2, 0.75, truncate_mode="level")
+# model = model.fit(clustering_data_3)
+# plot_dendrogram(model, columns_for_clustering_3, 1, truncate_mode="level")
 
+
+def kmeans_clustering(data, n_clusters, title):
+    umap_data = data
+    kmeans = cluster.KMeans(n_clusters= n_clusters, n_init=10, random_state=10).fit(umap_data)
+    reduced_data_umap = umap.UMAP(
+        n_components=2, random_state=42).fit_transform(umap_data)
+    kmeans_df = pd.DataFrame(reduced_data_umap, columns=["x", "y"])
+    kmeans_df["Cluster"] = kmeans.labels_
+    kmeans_df["Valstybė"] = normalized_data_grouped_by_country["Entity"]
+    fig = px.scatter(kmeans_df, x="x", y="y", color="Cluster", title=title, hover_name="Valstybė")
+    fig.show()
+
+kmeans_clustering(clustering_data_1, 5, "UMAP Visualization - Data 1 (K-Means)")
+kmeans_clustering(clustering_data_2, 6, "UMAP Visualization - Data 2 (K-Means)")
+kmeans_clustering(clustering_data_3, 6, "UMAP Visualization - Data 3 (K-Means)")
 
 # # UMAP for filtered data
 # umap_data = filtered_data_grouped_by_country.drop(
