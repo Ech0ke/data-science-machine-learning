@@ -257,7 +257,7 @@ def plot_dendrogram(model, clustering_columns, lineHeight, **kwargs):
     plt.axhline(y=lineHeight, color='black', linestyle='--')
     columns_string = '\n'.join(clustering_columns)
     plt.title(
-        f"Dendogramos metodas optimaliam klasterių skaičiui rasti, stulpeliams: {columns_string}", pad=1)
+        f"Dendrogramos metodas optimaliam klasterių skaičiui rasti, stulpeliams: {columns_string}", pad=1)
     plt.xlabel("Taškų skaičius mazge (arba taško indeksas, jei nėra skliaustų).")
     plt.show()
 
@@ -266,9 +266,9 @@ model = AgglomerativeClustering(distance_threshold=0, n_clusters=None)
 model = model.fit(clustering_data_1)
 plot_dendrogram(model, columns_for_clustering_1, 0.75, truncate_mode="level")
 model = model.fit(clustering_data_2)
-plot_dendrogram(model, columns_for_clustering_2, 0.75, truncate_mode="level")
+plot_dendrogram(model, columns_for_clustering_2, 1.1, truncate_mode="level")
 model = model.fit(clustering_data_3)
-plot_dendrogram(model, columns_for_clustering_3, 1, truncate_mode="level")
+plot_dendrogram(model, columns_for_clustering_3, 1.5, truncate_mode="level")
 
 
 def kmeans_clustering(data, n_clusters, title, n_neighbors, min_dist, metric):
@@ -322,9 +322,9 @@ def hierarchical_clustering(data, n_clusters, title, n_neighbors, min_dist, metr
 # Assuming normalized_data_grouped_by_country is defined somewhere in your code
 hierarchical_clustering(clustering_data_1, 7, "UMAP Vizualicacija - 1 požymių rinkinys (Hierarchinis)",
                         n_neighbors=data_1_params["n_neighbors"], min_dist=data_1_params["min_dist"], metric=data_1_params["metric"])
-hierarchical_clustering(clustering_data_2, 12, "UMAP Vizualicacija - 2 požymių rinkinys (Hierarchinis)",
+hierarchical_clustering(clustering_data_2, 9, "UMAP Vizualicacija - 2 požymių rinkinys (Hierarchinis)",
                         n_neighbors=data_2_params["n_neighbors"], min_dist=data_2_params["min_dist"], metric=data_2_params["metric"])
-hierarchical_clustering(clustering_data_3, 17, "UMAP Vizualicacija - 3 požymių rinkinys (Hierarchinis)",
+hierarchical_clustering(clustering_data_3, 11, "UMAP Vizualicacija - 3 požymių rinkinys (Hierarchinis)",
                         n_neighbors=data_3_params["n_neighbors"], min_dist=data_3_params["min_dist"], metric=data_3_params["metric"])
 
 # DB scan clustering
