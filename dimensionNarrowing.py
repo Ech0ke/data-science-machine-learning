@@ -5,12 +5,15 @@ import umap
 import numpy as np
 from sklearn.cluster import AgglomerativeClustering
 import sklearn.cluster as cluster
-from sklearn.metrics import silhouette_score
+from sklearn.metrics import silhouette_score as ss
 import sklearn.metrics as metrics
 import matplotlib.pyplot as plt
 from scipy.cluster.hierarchy import linkage, fcluster
 from scipy.spatial.distance import pdist
 import seaborn as sns
+from sklearn.cluster import DBSCAN
+import itertools
+import numpy as np
 
 # Set the locale to use thousands separators
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
@@ -67,9 +70,8 @@ normalized_data_min_max[numeric_columns] = (
 
 normalized_data_min_max.to_csv('normalized.csv', index=False)
 
+
 # Adjust marker size for better visibility
-
-
 def adjust_colour_and_show(figure, title):
     figure.update_traces(marker=dict(size=5))
     figure.update_layout(title=title)
@@ -92,8 +94,14 @@ columns_for_clustering_1 = [
     'Electricity from fossil fuels (TWh)',
     'Electricity from nuclear (TWh)',
     'Electricity from renewables (TWh)']
+columns_for_clustering_1 = [
+    'Renewable energy share in the total final energy consumption (%)',
+    'Electricity from fossil fuels (TWh)',
+    'Electricity from nuclear (TWh)',
+    'Electricity from renewables (TWh)']
 
 columns_for_clustering_2 = [
+    f'Low-carbon electricity (% electricity)', 'Electricity from renewables (TWh)', 'Primary energy consumption per capita (kWh/person)', f'Access to electricity (% of population)']
     f'Low-carbon electricity (% electricity)', 'Electricity from renewables (TWh)', 'Primary energy consumption per capita (kWh/person)', f'Access to electricity (% of population)']
 
 columns_for_clustering_3 = [f'Access to electricity (% of population)', 'Access to clean fuels for cooking',
@@ -107,10 +115,11 @@ clustering_data_1 = normalized_data_grouped_by_country[columns_for_clustering_1]
 clustering_data_2 = normalized_data_grouped_by_country[columns_for_clustering_2]
 clustering_data_3 = normalized_data_grouped_by_country[columns_for_clustering_3]
 
-# Silhouette method
+# Constant for trying different cluster numbers in finding optimal cluster count
 K = range(2, 20)
 
 
+# Silhouette method
 def optimal_clusters_silhouette(clustering_data, clustering_columns, K):
     sil_score = []
     for i in K:
@@ -166,6 +175,86 @@ optimal_clusters_elbow(clustering_data_1, columns_for_clustering_1, K)
 optimal_clusters_elbow(clustering_data_2, columns_for_clustering_2, K)
 optimal_clusters_elbow(clustering_data_3, columns_for_clustering_3, K)
 
+# Task 4 data clustering
+
+
+# DB scan clustering
+def dbscan_clustering(data, eps, min_samples):
+    X = data.to_numpy()
+    dbscan = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
+
+    clusters = dbscan.labels_
+    return clusters
+
+
+def plot_umap_with_clusters(data, columns, title, eps, min_samples):
+    umap_data = data
+    clusters = dbscan_clustering(umap_data, eps, min_samples)
+
+    reduced_data_umap = umap.UMAP(
+        n_components=2, random_state=42).fit_transform(umap_data)
+    umap_df = pd.DataFrame(reduced_data_umap, columns=["x", "y"])
+    umap_df["Cluster"] = clusters
+    umap_df["Valstybė"] = normalized_data_grouped_by_country["Entity"]
+    print(f'Silhouette score of dbscan: {ss(umap_data, umap_df["Cluster"])}')
+
+    fig = px.scatter(umap_df, x="x", y="y", color="Cluster",
+                     title=title, hover_name="Valstybė")
+    fig.show()
+
+
+epsilons = np.linspace(0.01, 1, num=15)
+min_samples = np.arange(2, 20, step=3)
+combinations = list(itertools.product(epsilons, min_samples))
+N = len(combinations)
+
+
+def get_scores_and_labels(combinations, X):
+    scores = []
+    all_labels_list = []
+
+    for i, (eps, num_samples) in enumerate(combinations):
+        dbscan_cluster_model = DBSCAN(eps=eps, min_samples=num_samples).fit(X)
+        labels = dbscan_cluster_model.labels_
+        labels_set = set(labels)
+        num_clusters = len(labels_set)
+        if -1 in labels_set:
+            num_clusters -= 1
+
+        if (num_clusters < 2) or (num_clusters > 50):
+            scores.append(-10)
+            all_labels_list.append('bad')
+            c = (eps, num_samples)
+            continue
+
+        scores.append(ss(X, labels))
+        all_labels_list.append(labels)
+
+    best_index = np.argmax(scores)
+    best_parameters = combinations[best_index]
+    best_labels = all_labels_list[best_index]
+    best_score = scores[best_index]
+
+    return {'best_epsilon': best_parameters[0],
+            'best_min_samples': best_parameters[1],
+            'best_labels': best_labels,
+            'best_score': best_score}
+
+
+best_dict_1 = get_scores_and_labels(combinations, clustering_data_1.to_numpy())
+print(f'Best DBSCAN parameters for columns_for_clustering_1: {best_dict_1}')
+best_dict_2 = get_scores_and_labels(combinations, clustering_data_2.to_numpy())
+print(f'Best DBSCAN parameters for columns_for_clustering_2: {best_dict_2}')
+best_dict_3 = get_scores_and_labels(combinations, clustering_data_3.to_numpy())
+print(f'Best DBSCAN parameters for columns_for_clustering_3: {best_dict_3}')
+
+# # Plot clustering results
+plot_umap_with_clusters(clustering_data_1, columns_for_clustering_1,
+                        "UMAP Visualization - Data 1", eps=0.081, min_samples=14)
+plot_umap_with_clusters(clustering_data_2, columns_for_clustering_2,
+                        "UMAP Visualization - Data 2", eps=0.22, min_samples=8)
+plot_umap_with_clusters(clustering_data_3, columns_for_clustering_3,
+                        "UMAP Visualization - Data 3", eps=0.65, min_samples=2)
 
 def plot_correlation_heatmap(data, title):
     correlation_matrix = data.corr()
