@@ -88,6 +88,40 @@ above_90_data_normalized = pd.merge(
 up_to_90_data_normalized.to_csv('up-to-90-data-normalized.csv', index=False)
 above_90_data_normalized.to_csv('above-90-data-normalized.csv', index=False)
 
+
+def adjust_colour_and_show(figure, title):
+    figure.update_traces(marker=dict(size=5))
+    figure.update_layout(title=title)
+    figure.update_layout(plot_bgcolor="#d0d0e1")
+    figure.show()
+
+
+# Umap data set
+# Need this, because without it umap visualization loses almost all countries, idk why. This doesn't change actual data, just reorders it
+normalized_data_grouped_by_country = normalized_data.groupby(
+    "Entity", as_index=False).mean()
+umap_data_normalized = normalized_data_grouped_by_country.drop(
+    columns=["Entity", "Access to electricity (% of population)"])
+
+reduced_data_umap_normalized = umap.UMAP(n_components=2, random_state=42).fit_transform(
+    umap_data_normalized)
+
+umap_df_normalized = pd.DataFrame(
+    reduced_data_umap_normalized, columns=["x", "y"])
+
+# Add back misisng columns for data visualization
+umap_df_normalized["Entity"] = normalized_data_grouped_by_country["Entity"]
+umap_df_normalized["Access to electricity (% of population)"] = normalized_data_grouped_by_country[
+    "Access to electricity (% of population)"]
+
+# Use Plotly Express for interactive plotting for normalized data
+fig_electricity_percentage_normalized = px.scatter(umap_df_normalized, x="x", y="y", range_x=[-1, 14], range_y=[-1, 14],
+                                                   color="Access to electricity (% of population)", hover_name="Entity")
+
+adjust_colour_and_show(fig_electricity_percentage_normalized,
+                       "UMAP projekcija (normalizuoti duomenys)")
+
+
 # Task 2
 
 # Descriptive analysis
@@ -108,6 +142,4 @@ with open('up_to_90_analysis.txt', 'w') as f:
 with open('above_90_analysis.txt', 'w') as f:
     f.write(above_90_data.describe().to_string())
 
-# Umap data set
-umap_data_normalized = normalized_data.drop(
-    columns=["Entity", "Access to electricity (% of population)"])
+# Task 3
