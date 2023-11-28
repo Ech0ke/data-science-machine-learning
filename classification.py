@@ -3,16 +3,11 @@ import plotly.express as px
 import locale
 import umap
 import numpy as np
-from sklearn.cluster import AgglomerativeClustering
-import sklearn.cluster as cluster
 from sklearn.metrics import silhouette_score as ss
-import sklearn.metrics as metrics
-import matplotlib.pyplot as plt
 from scipy.cluster.hierarchy import linkage, fcluster, dendrogram
 from scipy.spatial.distance import pdist
-import seaborn as sns
 from sklearn.cluster import DBSCAN
-import itertools
+from sklearn.model_selection import train_test_split
 import numpy as np
 
 # Set the locale to use thousands separators
@@ -46,7 +41,7 @@ filtered_data.drop(['Year'], axis=1, inplace=True)
 # Write the filtered data to a new CSV file
 filtered_data.to_csv('filtered-data-2019.csv', index=False)
 
-# Task 1
+# Task 1 create datasets for clasification
 
 # Save country names into 2 separate datasets
 up_to_90_countries = filtered_data[filtered_data['Access to electricity (% of population)'] <= 90]['Entity'].copy(
@@ -122,7 +117,7 @@ adjust_colour_and_show(fig_electricity_percentage_normalized,
                        "UMAP projekcija (normalizuoti duomenys)")
 
 
-# Task 2
+# Task 2 descriptive analysis
 
 # Descriptive analysis
 up_to_90_data = filtered_data[filtered_data['Access to electricity (% of population)'] <= 90].copy(
@@ -142,4 +137,28 @@ with open('up_to_90_analysis.txt', 'w') as f:
 with open('above_90_analysis.txt', 'w') as f:
     f.write(above_90_data.describe().to_string())
 
-# Task 3
+# TODO: calculate balance between classes
+
+# Task 3 split dataset into learn, validate, train
+classification_data = normalized_data.copy()
+test_data = above_90_data_normalized.sample(n=10)
+test_data = pd.concat(
+    [test_data, up_to_90_data_normalized.sample(n=10)], ignore_index=True)
+
+entities_to_drop = test_data['Entity'].tolist()
+classification_data = classification_data[~classification_data['Entity'].isin(
+    entities_to_drop)]
+
+train_data, validate_data = train_test_split(
+    classification_data, test_size=0.225, random_state=42)
+
+# Umap data split
+umap_classification_data = umap_df_normalized.copy()
+umap_test_data = umap_classification_data[umap_classification_data['Entity'].isin(
+    test_data['Entity'])]
+
+umap_classification_data = umap_classification_data[~umap_classification_data['Entity'].isin(
+    entities_to_drop)]
+
+umap_train_data, umap_validate_data = train_test_split(
+    umap_classification_data, test_size=0.225, random_state=42)
