@@ -17,6 +17,11 @@ from sklearn.metrics import classification_report, accuracy_score
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 pd.options.display.float_format = '{:.2f}'.format
 
+
+# Constants
+TARGET_COLUMN = 'Access to electricity (% of population)'
+
+THRESHOLD = 0.9
 # Load the CSV data into object
 data = pd.read_csv('global-data-on-sustainable-energy.csv')
 
@@ -140,7 +145,26 @@ with open('up_to_90_analysis.txt', 'w') as f:
 with open('above_90_analysis.txt', 'w') as f:
     f.write(above_90_data.describe().to_string())
 
-# TODO: calculate balance between classes
+# Balance between classes
+data_copy = normalized_data.copy()
+
+# Assuming 'Label' column contains boolean values
+data_copy['Label'] = data_copy[TARGET_COLUMN] >= THRESHOLD
+# Map boolean values to strings
+data_copy['Label'] = data_copy['Label'].replace(
+    {False: 'Iki 90%', True: '90%-100%'})
+
+# Create histogram with modified labels
+spread = px.histogram(data_copy, x='Label', title='Klasės balansas')
+
+# Update axis labels
+spread.update_xaxes(title_text='Klasė')
+spread.update_yaxes(title_text='Skaičius')
+
+# Display counts above the bars
+spread.update_traces(texttemplate='%{y}', textposition='outside')
+
+spread.show()
 
 # Task 3 split dataset into learn, validate, train
 classification_data = normalized_data.copy()
@@ -169,22 +193,12 @@ umap_train_data, umap_validate_data = train_test_split(
 # Define feature columns and target variable
 feature_columns = [col for col in train_data.columns if col not in [
     'Access to electricity (% of population)', 'Entity']]
-target_column = 'Access to electricity (% of population)'
 
-threshold = 0.9
 
-# Create binary labels based on the threshold
-train_data['Label'] = (train_data[target_column] >= threshold)
-validate_data['Label'] = (validate_data[target_column] >= threshold)
-test_data['Label'] = (test_data[target_column] >= threshold)
-
-normalized_data['Label'] = (
-    normalized_data[target_column] >= threshold)
-spread = px.histogram(normalized_data['Label'])
-spread.show()
-
-spread_train = px.histogram(train_data['Label'])
-spread_train.show()
+# Create binary labels based on the THRESHOLD
+train_data['Label'] = (train_data[TARGET_COLUMN] >= THRESHOLD)
+validate_data['Label'] = (validate_data[TARGET_COLUMN] >= THRESHOLD)
+test_data['Label'] = (test_data[TARGET_COLUMN] >= THRESHOLD)
 
 # Prepare data
 X_train = train_data[feature_columns]
