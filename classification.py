@@ -214,8 +214,9 @@ y_test = test_data['Label']
 # Define the hyperparameters you want to tune
 param_grid = {
     # Example priors to try
-    'priors': [None, [0.2, 0.8], [0.5, 0.5], [0.8, 0.2], [0.66, 0.34]],
-    'var_smoothing': [1e-9, 1e-8, 1e-7],  # Different values for var_smoothing
+    'priors': [None, [0.1, 0.9], [0.2, 0.8], [0.3, 0.7], [0.4, 0.6], [0.5, 0.5], [0.6, 0.4], [0.7, 0.3], [0.8, 0.2], [0.9, 0.1], [0.66, 0.34]],
+    # Different values for var_smoothing
+    'var_smoothing': [1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5],
 }
 
 # Initialize Naive Bayes classifier
@@ -230,6 +231,8 @@ grid_search.fit(X_train, y_train)
 best_params = grid_search.best_params_
 best_classifier = grid_search.best_estimator_
 
+classifier = GaussianNB(**best_params)
+
 # Use the best classifier for final evaluation on test data
 y_test_pred = best_classifier.predict(X_test)
 test_accuracy = accuracy_score(y_test, y_test_pred)
@@ -237,6 +240,8 @@ test_classification_rep = classification_report(y_test, y_test_pred)
 
 print(f"Accuracy on test data: {test_accuracy}")
 print("Classification Report on test data:\n", test_classification_rep)
+print("Best parameters for the original dataset:")
+print(best_params)
 
 umap_classification_data['Label'] = (
     umap_classification_data[TARGET_COLUMN] >= THRESHOLD)
@@ -259,14 +264,6 @@ X_train_umap = umap_classification_data.drop(columns=['Label'])
 y_test_umap = umap_test_data['Label']
 X_test_umap = umap_test_data.drop(columns=['Label'])
 
-
-# Define the hyperparameters you want to tune
-param_grid = {
-    # Example priors to try
-    'priors': [None, [0.2, 0.8], [0.5, 0.5], [0.8, 0.2], [0.66, 0.34]],
-    'var_smoothing': [1e-9, 1e-8, 1e-7],  # Different values for var_smoothing
-}
-
 # Initialize Naive Bayes classifier
 classifier = GaussianNB()
 
@@ -276,11 +273,14 @@ grid_search = GridSearchCV(classifier, param_grid,
 grid_search.fit(X_train_umap, y_train_umap)
 
 # Get the best parameters found by grid search
-best_params = grid_search.best_params_
-best_classifier = grid_search.best_estimator_
+best_params_umap = grid_search.best_params_
+best_classifier_umap = grid_search.best_estimator_
+
+# Initialize Naive Bayes classifier
+classifier = GaussianNB(**best_params_umap)
 
 # Use the best classifier for final evaluation on test data
-y_test_pred_umap = best_classifier.predict(X_test_umap)
+y_test_pred_umap = best_classifier_umap.predict(X_test_umap)
 test_accuracy_umap = accuracy_score(y_test_umap, y_test_pred_umap)
 test_classification_rep_umap = classification_report(
     y_test_umap, y_test_pred_umap)
@@ -288,3 +288,5 @@ test_classification_rep_umap = classification_report(
 print(f"Accuracy on test data umap: {test_accuracy_umap}")
 print("Classification Report on test data for umap:\n",
       test_classification_rep_umap)
+print("Best parameters for the UMAP dataset:")
+print(best_params_umap)
