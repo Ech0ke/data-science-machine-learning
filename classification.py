@@ -20,7 +20,6 @@ pd.options.display.float_format = '{:.2f}'.format
 
 # Constants
 TARGET_COLUMN = 'Access to electricity (% of population)'
-
 THRESHOLD = 0.9
 # Load the CSV data into object
 data = pd.read_csv('global-data-on-sustainable-energy.csv')
@@ -176,8 +175,9 @@ entities_to_drop = test_data['Entity'].tolist()
 classification_data = classification_data[~classification_data['Entity'].isin(
     entities_to_drop)]
 
-train_data, validate_data = train_test_split(
-    classification_data, test_size=0.225, random_state=42)
+train_data = classification_data.copy()
+# train_data, validate_data = train_test_split(
+#     classification_data, test_size=0.225, random_state=42)
 
 # Umap data split
 umap_classification_data = umap_df_normalized.copy()
@@ -187,28 +187,26 @@ umap_test_data = umap_classification_data[umap_classification_data['Entity'].isi
 umap_classification_data = umap_classification_data[~umap_classification_data['Entity'].isin(
     entities_to_drop)]
 
-umap_train_data, umap_validate_data = train_test_split(
-    umap_classification_data, test_size=0.225, random_state=42)
+# umap_train_data, umap_validate_data = train_test_split(
+#     umap_classification_data, test_size=0.225, random_state=42)
 
 # Define feature columns and target variable
 feature_columns = [col for col in train_data.columns if col not in [
     'Access to electricity (% of population)', 'Entity', 'Label']]
 
-
 # Create binary labels based on the THRESHOLD
 train_data['Label'] = (train_data[TARGET_COLUMN] >= THRESHOLD)
-validate_data['Label'] = (validate_data[TARGET_COLUMN] >= THRESHOLD)
+# validate_data['Label'] = (validate_data[TARGET_COLUMN] >= THRESHOLD)
 test_data['Label'] = (test_data[TARGET_COLUMN] >= THRESHOLD)
 
-train_data.drop(columns=['Access to electricity (% of population)'])
-validate_data.drop(columns=['Access to electricity (% of population)'])
-test_data.drop(columns=['Access to electricity (% of population)'])
+# validate_data.drop(columns=['Access to electricity (% of population)'])
+
 # Prepare data
 X_train = train_data[feature_columns]
 y_train = train_data['Label']
 
-X_validate = validate_data[feature_columns]
-y_validate = validate_data['Label']
+# X_validate = validate_data[feature_columns]
+# y_validate = validate_data['Label']
 
 X_test = test_data[feature_columns]
 y_test = test_data['Label']
@@ -219,9 +217,6 @@ param_grid = {
     'priors': [None, [0.2, 0.8], [0.5, 0.5], [0.8, 0.2], [0.66, 0.34]],
     'var_smoothing': [1e-9, 1e-8, 1e-7],  # Different values for var_smoothing
 }
-
-# nan_indices = np.isnan(your_test_scores)
-# print("NANANANA: ", nan_indices)
 
 # Initialize Naive Bayes classifier
 classifier = GaussianNB()
@@ -242,3 +237,54 @@ test_classification_rep = classification_report(y_test, y_test_pred)
 
 print(f"Accuracy on test data: {test_accuracy}")
 print("Classification Report on test data:\n", test_classification_rep)
+
+umap_classification_data['Label'] = (
+    umap_classification_data[TARGET_COLUMN] >= THRESHOLD)
+
+
+umap_classification_data = umap_classification_data.drop(
+    columns=['Access to electricity (% of population)', 'Entity'], axis=1)
+
+umap_test_data['Label'] = (umap_test_data[TARGET_COLUMN] >= THRESHOLD)
+umap_test_data = umap_test_data.drop(
+    columns=['Access to electricity (% of population)', 'Entity'], axis=1)
+
+y_train_umap = umap_classification_data['Label']
+X_train_umap = umap_classification_data.drop(columns=['Label'])
+
+
+# X_validate = validate_data[feature_columns]
+# y_validate = validate_data['Label']
+
+y_test_umap = umap_test_data['Label']
+X_test_umap = umap_test_data.drop(columns=['Label'])
+
+
+# Define the hyperparameters you want to tune
+param_grid = {
+    # Example priors to try
+    'priors': [None, [0.2, 0.8], [0.5, 0.5], [0.8, 0.2], [0.66, 0.34]],
+    'var_smoothing': [1e-9, 1e-8, 1e-7],  # Different values for var_smoothing
+}
+
+# Initialize Naive Bayes classifier
+classifier = GaussianNB()
+
+# Perform grid search with cross-validation
+grid_search = GridSearchCV(classifier, param_grid,
+                           cv=5)  # 5-fold cross-validation
+grid_search.fit(X_train_umap, y_train_umap)
+
+# Get the best parameters found by grid search
+best_params = grid_search.best_params_
+best_classifier = grid_search.best_estimator_
+
+# Use the best classifier for final evaluation on test data
+y_test_pred_umap = best_classifier.predict(X_test_umap)
+test_accuracy_umap = accuracy_score(y_test_umap, y_test_pred_umap)
+test_classification_rep_umap = classification_report(
+    y_test_umap, y_test_pred_umap)
+
+print(f"Accuracy on test data umap: {test_accuracy_umap}")
+print("Classification Report on test data for umap:\n",
+      test_classification_rep_umap)
