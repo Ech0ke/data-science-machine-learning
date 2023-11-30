@@ -202,7 +202,7 @@ test_data['Label'] = (test_data[TARGET_COLUMN] >= THRESHOLD)
 
 train_data.drop(columns=['Access to electricity (% of population)'])
 validate_data.drop(columns=['Access to electricity (% of population)'])
-test_data.drop(columns=['Access to electricity (% of population)', 'Label'])
+test_data.drop(columns=['Access to electricity (% of population)'])
 # Prepare data
 X_train = train_data[feature_columns]
 y_train = train_data['Label']
@@ -219,6 +219,9 @@ param_grid = {
     'priors': [None, [0.2, 0.8], [0.5, 0.5], [0.8, 0.2], [0.66, 0.34]],
     'var_smoothing': [1e-9, 1e-8, 1e-7],  # Different values for var_smoothing
 }
+
+# nan_indices = np.isnan(your_test_scores)
+# print("NANANANA: ", nan_indices)
 
 # Initialize Naive Bayes classifier
 classifier = GaussianNB()
