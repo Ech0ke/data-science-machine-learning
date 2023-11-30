@@ -192,7 +192,7 @@ umap_train_data, umap_validate_data = train_test_split(
 
 # Define feature columns and target variable
 feature_columns = [col for col in train_data.columns if col not in [
-    'Access to electricity (% of population)', 'Entity']]
+    'Access to electricity (% of population)', 'Entity', 'Label']]
 
 
 # Create binary labels based on the THRESHOLD
@@ -200,6 +200,9 @@ train_data['Label'] = (train_data[TARGET_COLUMN] >= THRESHOLD)
 validate_data['Label'] = (validate_data[TARGET_COLUMN] >= THRESHOLD)
 test_data['Label'] = (test_data[TARGET_COLUMN] >= THRESHOLD)
 
+train_data.drop(columns=['Access to electricity (% of population)'])
+validate_data.drop(columns=['Access to electricity (% of population)'])
+test_data.drop(columns=['Access to electricity (% of population)', 'Label'])
 # Prepare data
 X_train = train_data[feature_columns]
 y_train = train_data['Label']
@@ -213,7 +216,7 @@ y_test = test_data['Label']
 # Define the hyperparameters you want to tune
 param_grid = {
     # Example priors to try
-    'priors': [None, [0.2, 0.8], [0.5, 0.5], [0.8, 0.2]],
+    'priors': [None, [0.2, 0.8], [0.5, 0.5], [0.8, 0.2], [0.66, 0.34]],
     'var_smoothing': [1e-9, 1e-8, 1e-7],  # Different values for var_smoothing
 }
 
