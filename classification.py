@@ -9,6 +9,9 @@ from scipy.spatial.distance import pdist
 from sklearn.cluster import DBSCAN
 from sklearn.model_selection import train_test_split
 import numpy as np
+from sklearn.model_selection import GridSearchCV
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import classification_report, accuracy_score
 
 # Set the locale to use thousands separators
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
@@ -162,3 +165,60 @@ umap_classification_data = umap_classification_data[~umap_classification_data['E
 
 umap_train_data, umap_validate_data = train_test_split(
     umap_classification_data, test_size=0.225, random_state=42)
+
+# Define feature columns and target variable
+feature_columns = [col for col in train_data.columns if col not in [
+    'Access to electricity (% of population)', 'Entity']]
+target_column = 'Access to electricity (% of population)'
+
+threshold = 0.9
+
+# Create binary labels based on the threshold
+train_data['Label'] = (train_data[target_column] >= threshold)
+validate_data['Label'] = (validate_data[target_column] >= threshold)
+test_data['Label'] = (test_data[target_column] >= threshold)
+
+normalized_data['Label'] = (
+    normalized_data[target_column] >= threshold)
+spread = px.histogram(normalized_data['Label'])
+spread.show()
+
+spread_train = px.histogram(train_data['Label'])
+spread_train.show()
+
+# Prepare data
+X_train = train_data[feature_columns]
+y_train = train_data['Label']
+
+X_validate = validate_data[feature_columns]
+y_validate = validate_data['Label']
+
+X_test = test_data[feature_columns]
+y_test = test_data['Label']
+
+# Define the hyperparameters you want to tune
+param_grid = {
+    # Example priors to try
+    'priors': [None, [0.2, 0.8], [0.5, 0.5], [0.8, 0.2]],
+    'var_smoothing': [1e-9, 1e-8, 1e-7],  # Different values for var_smoothing
+}
+
+# Initialize Naive Bayes classifier
+classifier = GaussianNB()
+
+# Perform grid search with cross-validation
+grid_search = GridSearchCV(classifier, param_grid,
+                           cv=5)  # 5-fold cross-validation
+grid_search.fit(X_train, y_train)
+
+# Get the best parameters found by grid search
+best_params = grid_search.best_params_
+best_classifier = grid_search.best_estimator_
+
+# Use the best classifier for final evaluation on test data
+y_test_pred = best_classifier.predict(X_test)
+test_accuracy = accuracy_score(y_test, y_test_pred)
+test_classification_rep = classification_report(y_test, y_test_pred)
+
+print(f"Accuracy on test data: {test_accuracy}")
+print("Classification Report on test data:\n", test_classification_rep)
