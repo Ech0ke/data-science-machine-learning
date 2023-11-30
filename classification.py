@@ -231,8 +231,6 @@ grid_search.fit(X_train, y_train)
 best_params = grid_search.best_params_
 best_classifier = grid_search.best_estimator_
 
-classifier = GaussianNB(**best_params)
-
 # Use the best classifier for final evaluation on test data
 y_test_pred = best_classifier.predict(X_test)
 test_accuracy = accuracy_score(y_test, y_test_pred)
@@ -257,7 +255,6 @@ umap_test_data = umap_test_data.drop(
 y_train_umap = umap_classification_data['Label']
 X_train_umap = umap_classification_data.drop(columns=['Label'])
 
-
 # X_validate = validate_data[feature_columns]
 # y_validate = validate_data['Label']
 
@@ -275,9 +272,6 @@ grid_search.fit(X_train_umap, y_train_umap)
 # Get the best parameters found by grid search
 best_params_umap = grid_search.best_params_
 best_classifier_umap = grid_search.best_estimator_
-
-# Initialize Naive Bayes classifier
-classifier = GaussianNB(**best_params_umap)
 
 # Use the best classifier for final evaluation on test data
 y_test_pred_umap = best_classifier_umap.predict(X_test_umap)
