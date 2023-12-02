@@ -179,8 +179,6 @@ classification_data = classification_data[~classification_data['Entity'].isin(
     entities_to_drop)]
 
 train_data = classification_data.copy()
-# train_data, validate_data = train_test_split(
-#     classification_data, test_size=0.225, random_state=42)
 
 # Umap data split
 umap_classification_data = umap_df_normalized.copy()
@@ -190,11 +188,10 @@ umap_test_data = umap_classification_data[umap_classification_data['Entity'].isi
 umap_classification_data = umap_classification_data[~umap_classification_data['Entity'].isin(
     entities_to_drop)]
 
-# umap_train_data, umap_validate_data = train_test_split(
-#     umap_classification_data, test_size=0.225, random_state=42)
-
 # Define feature columns and target variable
 feature_columns = [col for col in train_data.columns if col not in [
+    'Access to electricity (% of population)', 'Entity', 'Label']]
+feature_columns_umap = [col for col in umap_classification_data.columns if col not in [
     'Access to electricity (% of population)', 'Entity', 'Label']]
 
 # Create binary labels based on the THRESHOLD
@@ -202,14 +199,9 @@ train_data['Label'] = (train_data[TARGET_COLUMN] >= THRESHOLD)
 # validate_data['Label'] = (validate_data[TARGET_COLUMN] >= THRESHOLD)
 test_data['Label'] = (test_data[TARGET_COLUMN] >= THRESHOLD)
 
-# validate_data.drop(columns=['Access to electricity (% of population)'])
-
 # Prepare data
 X_train = train_data[feature_columns]
 y_train = train_data['Label']
-
-# X_validate = validate_data[feature_columns]
-# y_validate = validate_data['Label']
 
 X_test = test_data[feature_columns]
 y_test = test_data['Label']
@@ -221,7 +213,7 @@ param_grid = {
     # Different values for var_smoothing
     'var_smoothing': [1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5],
 }
-
+# Task 4: classify using Gaussian Naive Bayes
 # Initialize Naive Bayes classifier
 classifier = GaussianNB()
 
@@ -247,22 +239,13 @@ print(best_params)
 umap_classification_data['Label'] = (
     umap_classification_data[TARGET_COLUMN] >= THRESHOLD)
 
-
-umap_classification_data = umap_classification_data.drop(
-    columns=['Access to electricity (% of population)', 'Entity'], axis=1)
-
 umap_test_data['Label'] = (umap_test_data[TARGET_COLUMN] >= THRESHOLD)
-umap_test_data = umap_test_data.drop(
-    columns=['Access to electricity (% of population)', 'Entity'], axis=1)
 
 y_train_umap = umap_classification_data['Label']
-X_train_umap = umap_classification_data.drop(columns=['Label'])
-
-# X_validate = validate_data[feature_columns]
-# y_validate = validate_data['Label']
+X_train_umap = umap_classification_data[feature_columns_umap]
 
 y_test_umap = umap_test_data['Label']
-X_test_umap = umap_test_data.drop(columns=['Label'])
+X_test_umap = umap_test_data[feature_columns_umap]
 
 # Initialize Naive Bayes classifier
 classifier = GaussianNB()
@@ -291,9 +274,9 @@ print(best_params_umap)
 # Fit the LabelEncoder for labels
 label_encoder = LabelEncoder()
 y_train_encoded = label_encoder.fit_transform(y_train)
-y_test_encoded = label_encoder.transform(y_test)
+y_test_encoded = label_encoder.transform(y_test_pred)
 y_train_encoded_umap = label_encoder.fit_transform(y_train_umap)
-y_test_encoded_umap = label_encoder.transform(y_test_umap)
+y_test_encoded_umap = label_encoder.transform(y_test_pred_umap)
 
 
 def plot_decision_boundary(X, y, classifier, title, entity_df):
@@ -322,8 +305,6 @@ def plot_decision_boundary(X, y, classifier, title, entity_df):
                     colorscale='Fall', showlegend=False, showscale=False)
 
     entity_df = entity_df.groupby("Entity", as_index=False).mean()
-    umap_entity = pd.concat(
-        [pd.DataFrame(X_umap, columns=['x', 'y']), entity_df], axis=1)
 
     # Add scatter plot for UMAP-transformed data (Trace 1)
     scatter_trace = go.Scatter(x=X_umap[:, 0], y=X_umap[:, 1], mode='markers',
@@ -350,16 +331,68 @@ def plot_decision_boundary(X, y, classifier, title, entity_df):
     fig.show()
 
 
+def plot_decision_boundary_umap(X, y, classifier, title, entity_df):
+
+    # Fit the classifier on UMAP-transformed data
+    classifier.fit(X, y)
+
+    print(type(X))
+
+    # Create a meshgrid for decision boundary
+    x_min, x_max = X['x'].min() - 1, X['x'].max() + 1
+    y_min, y_max = X['y'].min() - 1, X['y'].max() + 1
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1),
+                         np.arange(y_min, y_max, 0.1))
+
+    # Predict for each point in meshgrid to obtain the decision boundary
+    Z = classifier.predict(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z.reshape(xx.shape)
+
+    # Initialize an empty figure using Plotly Express
+    fig = go.Figure()
+
+    # Add contour plot for decision boundary (Trace 0)
+    fig.add_contour(x=xx[0], y=yy[:, 0], z=Z, opacity=0.1,
+                    colorscale='Fall', showlegend=False, showscale=False)
+
+    entity_df = entity_df.groupby("Entity", as_index=False).mean()
+
+    # Add scatter plot for UMAP-transformed data (Trace 1)
+    scatter_trace = go.Scatter(x=X['x'], y=X['y'], mode='markers',
+                               marker=dict(color=y, colorscale='Fall'),
+                               legendgroup='group', showlegend=False)
+    fig.add_trace(scatter_trace)
+
+    # Add separate traces for each class for the legend
+    classes = set(y)
+    for label in classes:
+        data_by_label = X[y == label]
+        legend_name = '90%-100%' if label == 1 else 'iki 90%'
+        entity_texts = entity_df.loc[y == label, 'Entity']
+        hover_text = [f'<b>Valstybė:</b> {entity}' for entity in entity_texts]
+        fig.add_trace(go.Scatter(x=data_by_label['x'], y=data_by_label['y'], mode='markers',
+                                 marker=dict(color=label, colorscale='Fall'),
+                                 legendgroup=f'{label}', showlegend=True, name=legend_name,
+                                 text=hover_text))
+
+    # Update layout with labels and title
+    fig.update_layout(title=title, xaxis_title='UMAP Component 1',
+                      yaxis_title='UMAP Component 2')
+
+    fig.show()
+
+
 # Plot decision boundary for train and test data
 plot_decision_boundary(X_train, y_train_encoded, best_classifier,
-                       'Decision boundary with UMAP-transformed train data', train_data)
-# plot_decision_boundary(X_test, y_test_encoded, best_classifier,
-#                        'Decision boundary with UMAP-transformed test data')
+                       'Apmokymo duomenų pasiskirstymas su normuota duomenų aibe', train_data)
+plot_decision_boundary(X_test, y_test_encoded, best_classifier,
+                       'Klasifikatoriaus nuspėtų reikšmių iš testavimo duomenų pasiskirstymas su normuota duomenų aibe', test_data)
 
-# plot_decision_boundary(X_train_umap, y_train_encoded_umap, best_classifier_umap,
-#                        'Decision boundary with UMAP-transformed train data used on reduced data')
-# plot_decision_boundary(X_test, y_test_encoded_umap, best_classifier_umap,
-#                        'Decision boundary with UMAP-transformed test data used with umap')
+plot_decision_boundary_umap(X_train_umap, y_train_encoded_umap, best_classifier_umap,
+                            'Apmokymo duomenų pasiskirstymas su dvimate dimensija', umap_classification_data)
+plot_decision_boundary_umap(X_test_umap, y_test_encoded_umap, best_classifier_umap,
+                            'Klasifikatoriaus nuspėtų reikšmių iš testavimo duomenų pasiskirstymas su dvimate dimensija', umap_test_data)
+
 
 # Confusion matrixes
 conf_matrix = confusion_matrix(y_test, y_test_pred)
