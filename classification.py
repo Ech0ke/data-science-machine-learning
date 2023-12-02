@@ -4,16 +4,13 @@ import locale
 import umap
 import numpy as np
 from sklearn.metrics import silhouette_score as ss
-from scipy.cluster.hierarchy import linkage, fcluster, dendrogram
-from scipy.spatial.distance import pdist
-from sklearn.cluster import DBSCAN
-from sklearn.model_selection import train_test_split
-import numpy as np
 from sklearn.model_selection import GridSearchCV
 from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import classification_report, accuracy_score
-from sklearn.metrics import confusion_matrix
 from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+from matplotlib import pyplot as plt
 import plotly.graph_objects as go
 
 # Set the locale to use thousands separators
@@ -332,7 +329,6 @@ def plot_decision_boundary(X, y, classifier, title, entity_df):
 
 
 def plot_decision_boundary_umap(X, y, classifier, title, entity_df):
-
     # Fit the classifier on UMAP-transformed data
     classifier.fit(X, y)
 
@@ -399,4 +395,81 @@ conf_matrix = confusion_matrix(y_test, y_test_pred)
 print("Confusion Matrix on normalized:\n", conf_matrix)
 
 conf_matrix_umap = confusion_matrix(y_test_umap, y_test_pred_umap)
-print("Confusion Matrix on normalized:\n", conf_matrix_umap)
+print("Confusion Matrix on normalized umap:\n", conf_matrix_umap)
+
+
+## Decision tree
+
+def print_measurements_results(decision_tree, label, x, y):
+    predictions = decision_tree.predict(x)
+    test_confusion_matrix = confusion_matrix(y, predictions)
+    test_accuracy = accuracy_score(y, predictions)
+    test_precision = precision_score(y, predictions)
+    test_recall = recall_score(y, predictions)
+    test_f1 = f1_score(y, predictions)
+    print(f"Confusion Matrix for {label}: \n{test_confusion_matrix}")
+    print(f"Accuracy on test data for {label}: {test_accuracy}")
+    print(f"Precision on test data for {label}: {test_precision}")
+    print(f"Recall on test data for {label}: {test_recall}")
+    print(f"F1 on test data for {label}: {test_f1}")
+    print("\n")
+
+def decision_tree_results(criterion="gini", max_depth=4):
+    decision_tree = DecisionTreeClassifier(random_state=42, criterion=criterion, max_depth=max_depth)
+    decision_tree.fit(X_train, y_train)
+    print_measurements_results(decision_tree, "decision tree", X_test, y_test)
+    fig = plt.figure(figsize=(25,20))
+    _ = plot_tree(decision_tree, feature_names=feature_columns, class_names={0: "Electricity < 90", 1: "Electricity >= 90"}, filled=True, fontsize=12)
+    plt.title("Sprendimų medis su normuota duomenų aibe ir be parametrų")
+    plt.show()
+
+def decision_tree_umap_results():
+    decision_tree = DecisionTreeClassifier(random_state=42, criterion="entropy", max_depth=4)
+    decision_tree.fit(X_train_umap, y_train_umap)
+    print_measurements_results(decision_tree, "decision tree", X_test_umap, y_test_umap)
+    fig = plt.figure(figsize=(25,20))
+    _ = plot_tree(decision_tree, feature_names=feature_columns_umap, class_names={0: "Electricity < 90", 1: "Electricity >= 90"}, filled=True, fontsize=12)
+    plt.title("Sprendimų medis su dimensijos mažinta aibe ir parametrais (criterion=entropy, max_depth=4)")
+    plt.show()
+
+def decision_tree_best_results():
+    decision_tree = DecisionTreeClassifier(random_state=42)
+    param_grid = {
+        'max_depth': [2, 3, 4, 5, 6, 7],
+        "random_state": [10, 42, 70, 100],
+        'criterion': ['entropy', 'gini'],
+    }
+    grid_search = GridSearchCV(decision_tree, param_grid, cv=5, scoring='accuracy')
+    grid_search.fit(X_train, y_train)
+    best_params = grid_search.best_params_
+    best_estimator = grid_search.best_estimator_
+    print_measurements_results(best_estimator, "decision tree", X_test, y_test)
+    fig = plt.figure(figsize=(25,20))
+    _ = plot_tree(best_estimator, feature_names=feature_columns, class_names={0: "Electricity < 90", 1: "Electricity >= 90"}, filled=True, fontsize=12)
+    plt.title(f"Sprendimų medis su normuota duomenų aibe ir parametrais {best_params}")
+    plt.show()
+
+def decision_tree_params_test():
+    train_accuracy = []
+    validation_accuracy = []
+    for depth in range(1, 10):
+        dt = DecisionTreeClassifier(max_depth=depth, random_state=42, criterion="entropy")
+        dt.fit(X_train_umap, y_train_umap)
+        train_accuracy.append(dt.score(X_train_umap, y_train_umap))
+        dt = DecisionTreeClassifier(max_depth=depth, random_state=42)
+        dt.fit(X_train_umap, y_train_umap)
+        validation_accuracy.append(dt.score(X_test_umap, y_test_umap))
+
+    frame = pd.DataFrame({"max_depth": range(1, 10), "train_acc": train_accuracy, "valid_acc": validation_accuracy})
+    plt.figure(figsize=(12, 6))
+    plt.plot(frame["max_depth"], frame["train_acc"], marker="o")
+    plt.plot(frame["max_depth"], frame["valid_acc"], marker="o")
+    plt.xlabel("Gylis medžio")
+    plt.ylabel("Tikslumas")
+    plt.legend(["entropy", "gini"])
+    plt.show()
+
+decision_tree_params_test()
+decision_tree_results()
+decision_tree_umap_results()
+decision_tree_best_results()
