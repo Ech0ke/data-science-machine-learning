@@ -12,6 +12,9 @@ import numpy as np
 from sklearn.model_selection import GridSearchCV
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import classification_report, accuracy_score
+from sklearn.metrics import confusion_matrix
+from sklearn.preprocessing import LabelEncoder
+import plotly.graph_objects as go
 
 # Set the locale to use thousands separators
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
@@ -284,3 +287,83 @@ print("Classification Report on test data for umap:\n",
       test_classification_rep_umap)
 print("Best parameters for the UMAP dataset:")
 print(best_params_umap)
+
+# Fit the LabelEncoder for labels
+label_encoder = LabelEncoder()
+y_train_encoded = label_encoder.fit_transform(y_train)
+y_test_encoded = label_encoder.transform(y_test)
+y_train_encoded_umap = label_encoder.fit_transform(y_train_umap)
+y_test_encoded_umap = label_encoder.transform(y_test_umap)
+
+
+def plot_decision_boundary(X, y, classifier, title, entity_df):
+    # Perform UMAP for dimensionality reduction to 2 components
+    reducer = umap.UMAP(n_components=2)
+    X_umap = reducer.fit_transform(X)
+
+    # Fit the classifier on UMAP-transformed data
+    classifier.fit(X_umap, y)
+
+    # Create a meshgrid for decision boundary
+    x_min, x_max = X_umap[:, 0].min() - 1, X_umap[:, 0].max() + 1
+    y_min, y_max = X_umap[:, 1].min() - 1, X_umap[:, 1].max() + 1
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1),
+                         np.arange(y_min, y_max, 0.1))
+
+    # Predict for each point in meshgrid to obtain the decision boundary
+    Z = classifier.predict(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z.reshape(xx.shape)
+
+    # Initialize an empty figure using Plotly Express
+    fig = go.Figure()
+
+    # Add contour plot for decision boundary (Trace 0)
+    fig.add_contour(x=xx[0], y=yy[:, 0], z=Z, opacity=0.1,
+                    colorscale='Fall', showlegend=False, showscale=False)
+
+    entity_df = entity_df.groupby("Entity", as_index=False).mean()
+    umap_entity = pd.concat(
+        [pd.DataFrame(X_umap, columns=['x', 'y']), entity_df], axis=1)
+
+    # Add scatter plot for UMAP-transformed data (Trace 1)
+    scatter_trace = go.Scatter(x=X_umap[:, 0], y=X_umap[:, 1], mode='markers',
+                               marker=dict(color=y, colorscale='Fall'),
+                               legendgroup='group', showlegend=False)
+    fig.add_trace(scatter_trace)
+
+    # Add separate traces for each class for the legend
+    classes = set(y)
+    for label in classes:
+        data_by_label = X_umap[y == label]
+        legend_name = '90%-100%' if label == 1 else 'iki 90%'
+        entity_texts = entity_df.loc[y == label, 'Entity']
+        hover_text = [f'<b>Valstybė:</b> {entity}' for entity in entity_texts]
+        fig.add_trace(go.Scatter(x=data_by_label[:, 0], y=data_by_label[:, 1], mode='markers',
+                                 marker=dict(color=label, colorscale='Fall'),
+                                 legendgroup=f'{label}', showlegend=True, name=legend_name,
+                                 text=hover_text))
+
+    # Update layout with labels and title
+    fig.update_layout(title=title, xaxis_title='UMAP Component 1',
+                      yaxis_title='UMAP Component 2')
+
+    fig.show()
+
+
+# Plot decision boundary for train and test data
+plot_decision_boundary(X_train, y_train_encoded, best_classifier,
+                       'Decision boundary with UMAP-transformed train data', train_data)
+# plot_decision_boundary(X_test, y_test_encoded, best_classifier,
+#                        'Decision boundary with UMAP-transformed test data')
+
+# plot_decision_boundary(X_train_umap, y_train_encoded_umap, best_classifier_umap,
+#                        'Decision boundary with UMAP-transformed train data used on reduced data')
+# plot_decision_boundary(X_test, y_test_encoded_umap, best_classifier_umap,
+#                        'Decision boundary with UMAP-transformed test data used with umap')
+
+# Confusion matrixes
+conf_matrix = confusion_matrix(y_test, y_test_pred)
+print("Confusion Matrix on normalized:\n", conf_matrix)
+
+conf_matrix_umap = confusion_matrix(y_test_umap, y_test_pred_umap)
+print("Confusion Matrix on normalized:\n", conf_matrix_umap)
