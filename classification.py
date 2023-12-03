@@ -15,7 +15,7 @@ from sklearn.metrics import classification_report, accuracy_score
 from sklearn.metrics import confusion_matrix
 from sklearn.preprocessing import LabelEncoder
 import plotly.graph_objects as go
-from sklearn.neighbors import KNeighborsClassifier  # Import K-NN classifier
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 
 # Set the locale to use thousands separators
@@ -201,8 +201,6 @@ train_data['Label'] = (train_data[TARGET_COLUMN] >= THRESHOLD)
 # validate_data['Label'] = (validate_data[TARGET_COLUMN] >= THRESHOLD)
 test_data['Label'] = (test_data[TARGET_COLUMN] >= THRESHOLD)
 
-
-'''
 # Prepare data
 X_train = train_data[feature_columns]
 y_train = train_data['Label']
@@ -282,8 +280,6 @@ y_train_encoded = label_encoder.fit_transform(y_train)
 y_test_encoded = label_encoder.transform(y_test_pred)
 y_train_encoded_umap = label_encoder.fit_transform(y_train_umap)
 y_test_encoded_umap = label_encoder.transform(y_test_pred_umap)
-
-'''
 
 def plot_decision_boundary(X, y, classifier, title, entity_df):
     # Perform UMAP for dimensionality reduction to 2 components
@@ -387,7 +383,7 @@ def plot_decision_boundary_umap(X, y, classifier, title, entity_df):
 
     fig.show()
 
-'''
+
 # Plot decision boundary for train and test data
 plot_decision_boundary(X_train, y_train_encoded, best_classifier,
                        'Apmokymo duomenų pasiskirstymas su normuota duomenų aibe', train_data)
@@ -406,7 +402,7 @@ print("Confusion Matrix on normalized:\n", conf_matrix)
 
 conf_matrix_umap = confusion_matrix(y_test_umap, y_test_pred_umap)
 print("Confusion Matrix on normalized:\n", conf_matrix_umap)
-'''
+
 
 
 #K-nn starts here
