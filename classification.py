@@ -15,6 +15,8 @@ from sklearn.metrics import classification_report, accuracy_score
 from sklearn.metrics import confusion_matrix
 from sklearn.preprocessing import LabelEncoder
 import plotly.graph_objects as go
+from sklearn.neighbors import KNeighborsClassifier  # Import K-NN classifier
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 
 # Set the locale to use thousands separators
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
@@ -213,6 +215,7 @@ param_grid = {
     # Different values for var_smoothing
     'var_smoothing': [1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5],
 }
+
 # Task 4: classify using Gaussian Naive Bayes
 # Initialize Naive Bayes classifier
 classifier = GaussianNB()
@@ -400,3 +403,114 @@ print("Confusion Matrix on normalized:\n", conf_matrix)
 
 conf_matrix_umap = confusion_matrix(y_test_umap, y_test_pred_umap)
 print("Confusion Matrix on normalized:\n", conf_matrix_umap)
+
+
+#K-nn starts here
+# Prepare data for the original dataset
+X_train = train_data[feature_columns]
+y_train = train_data['Label']
+
+X_test = test_data[feature_columns]
+y_test = test_data['Label']
+
+# Define the hyperparameters you want to tune for k-NN
+param_grid = {
+    'n_neighbors': [3, 5, 7],  # Different values for the number of neighbors (k)
+    'weights': ['uniform', 'distance'],  # Weighting strategy
+    'metric': ['euclidean', 'manhattan'],  # Distance metric
+}
+
+# Initialize k-NN classifier
+knn_classifier = KNeighborsClassifier()
+
+# Perform grid search with cross-validation
+grid_search = GridSearchCV(knn_classifier, param_grid, cv=5)  # 5-fold cross-validation
+grid_search.fit(X_train, y_train)
+
+# Get the best parameters found by grid search
+best_params = grid_search.best_params_
+best_knn_classifier = grid_search.best_estimator_
+
+# Use the best k-NN classifier for final evaluation on test data
+y_test_pred = best_knn_classifier.predict(X_test)
+test_accuracy = accuracy_score(y_test, y_test_pred)
+test_classification_rep = classification_report(y_test, y_test_pred)
+
+print(f"Best parameters found by grid search: {best_params}")
+print(f"Accuracy on test data: {test_accuracy}")
+print("Classification Report on test data:\n", test_classification_rep)
+
+# Prepare data for the umap dataset
+umap_classification_data['Label'] = (umap_classification_data[TARGET_COLUMN] >= THRESHOLD)
+umap_classification_data = umap_classification_data.drop(columns=['Access to electricity (% of population)', 'Entity'], axis=1)
+
+umap_test_data['Label'] = (umap_test_data[TARGET_COLUMN] >= THRESHOLD)
+umap_test_data = umap_test_data.drop(columns=['Access to electricity (% of population)', 'Entity'], axis=1)
+
+y_train_umap = umap_classification_data['Label']
+X_train_umap = umap_classification_data.drop(columns=['Label'])
+
+y_test_umap = umap_test_data['Label']
+X_test_umap = umap_test_data.drop(columns=['Label'])
+
+# Perform grid search with cross-validation for umap dataset
+grid_search_umap = GridSearchCV(knn_classifier, param_grid, cv=5)  # 5-fold cross-validation
+grid_search_umap.fit(X_train_umap, y_train_umap)
+
+# Get the best parameters found by grid search for umap dataset
+best_params_umap = grid_search_umap.best_params_
+best_knn_classifier_umap = grid_search_umap.best_estimator_
+
+# Use the best k-NN classifier for final evaluation on test data for umap dataset
+y_test_pred_umap = best_knn_classifier_umap.predict(X_test_umap)
+test_accuracy_umap = accuracy_score(y_test_umap, y_test_pred_umap)
+test_classification_rep_umap = classification_report(y_test_umap, y_test_pred_umap)
+
+print(f"Best parameters found by grid search for umap dataset: {best_params_umap}")
+print(f"Accuracy on test data for umap dataset: {test_accuracy_umap}")
+print("Classification Report on test data for umap dataset:\n", test_classification_rep_umap)
+
+
+# Calculate evaluation metrics for the original dataset
+test_accuracy = accuracy_score(y_test, y_test_pred)
+precision = precision_score(y_test, y_test_pred)
+recall = recall_score(y_test, y_test_pred)
+f1 = f1_score(y_test, y_test_pred)
+
+# Confusion matrix for the original dataset
+conf_matrix = confusion_matrix(y_test, y_test_pred)
+
+print("Original Dataset Metrics:")
+print("Confusion Matrix:\n", conf_matrix)
+print(f"Accuracy on test data: {test_accuracy}")
+print(f"Precision: {precision}")
+print(f"Recall: {recall}")
+print(f"F1 Score: {f1}")
+
+
+# Calculate evaluation metrics for the UMAP dataset
+test_accuracy_umap = accuracy_score(y_test_umap, y_test_pred_umap)
+precision_umap = precision_score(y_test_umap, y_test_pred_umap)
+recall_umap = recall_score(y_test_umap, y_test_pred_umap)
+f1_umap = f1_score(y_test_umap, y_test_pred_umap)
+
+# Confusion matrix for the UMAP dataset
+conf_matrix_umap = confusion_matrix(y_test_umap, y_test_pred_umap)
+
+print("\nUMAP Dataset Metrics:")
+print("Confusion Matrix:\n", conf_matrix_umap)
+print(f"Accuracy on test data (UMAP): {test_accuracy_umap}")
+print(f"Precision (UMAP): {precision_umap}")
+print(f"Recall (UMAP): {recall_umap}")
+print(f"F1 Score (UMAP): {f1_umap}")
+
+plot_decision_boundary(X_train, y_train, best_knn_classifier,
+                       'Apmokymo duomenų pasiskirstymas su normuota duomenų aibe', train_data)
+plot_decision_boundary(X_test, y_test_pred, best_knn_classifier,
+                       'Klasifikatoriaus nuspėtų reikšmių iš testavimo duomenų pasiskirstymas su normuota duomenų aibe', test_data)
+
+# Visualize classification results for the UMAP dataset with K-NN
+plot_decision_boundary_umap(X_train_umap, y_train_umap, best_knn_classifier_umap,
+                            'Apmokymo duomenų pasiskirstymas su dvimate dimensija', umap_classification_data)
+plot_decision_boundary_umap(X_test_umap, y_test_pred_umap, best_knn_classifier_umap,
+                            'Klasifikatoriaus nuspėtų reikšmių iš testavimo duomenų pasiskirstymas su dvimate dimensija', umap_test_data)
