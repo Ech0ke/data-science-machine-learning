@@ -201,6 +201,8 @@ train_data['Label'] = (train_data[TARGET_COLUMN] >= THRESHOLD)
 # validate_data['Label'] = (validate_data[TARGET_COLUMN] >= THRESHOLD)
 test_data['Label'] = (test_data[TARGET_COLUMN] >= THRESHOLD)
 
+
+'''
 # Prepare data
 X_train = train_data[feature_columns]
 y_train = train_data['Label']
@@ -281,6 +283,7 @@ y_test_encoded = label_encoder.transform(y_test_pred)
 y_train_encoded_umap = label_encoder.fit_transform(y_train_umap)
 y_test_encoded_umap = label_encoder.transform(y_test_pred_umap)
 
+'''
 
 def plot_decision_boundary(X, y, classifier, title, entity_df):
     # Perform UMAP for dimensionality reduction to 2 components
@@ -384,7 +387,7 @@ def plot_decision_boundary_umap(X, y, classifier, title, entity_df):
 
     fig.show()
 
-
+'''
 # Plot decision boundary for train and test data
 plot_decision_boundary(X_train, y_train_encoded, best_classifier,
                        'Apmokymo duomenų pasiskirstymas su normuota duomenų aibe', train_data)
@@ -403,6 +406,7 @@ print("Confusion Matrix on normalized:\n", conf_matrix)
 
 conf_matrix_umap = confusion_matrix(y_test_umap, y_test_pred_umap)
 print("Confusion Matrix on normalized:\n", conf_matrix_umap)
+'''
 
 
 #K-nn starts here
@@ -504,13 +508,24 @@ print(f"Precision (UMAP): {precision_umap}")
 print(f"Recall (UMAP): {recall_umap}")
 print(f"F1 Score (UMAP): {f1_umap}")
 
-plot_decision_boundary(X_train, y_train, best_knn_classifier,
+
+# Encode labels for the original dataset
+label_encoder = LabelEncoder()
+y_train_encoded = label_encoder.fit_transform(y_train)
+y_test_encoded = label_encoder.transform(y_test_pred)
+
+# Encode labels for the UMAP dataset
+y_train_encoded_umap = label_encoder.fit_transform(y_train_umap)
+y_test_encoded_umap = label_encoder.transform(y_test_pred_umap)
+
+# Visualize classification results for the original dataset with K-NN
+plot_decision_boundary(X_train, y_train_encoded, best_knn_classifier,
                        'Apmokymo duomenų pasiskirstymas su normuota duomenų aibe', train_data)
-plot_decision_boundary(X_test, y_test_pred, best_knn_classifier,
+plot_decision_boundary(X_test, y_test_encoded, best_knn_classifier,
                        'Klasifikatoriaus nuspėtų reikšmių iš testavimo duomenų pasiskirstymas su normuota duomenų aibe', test_data)
 
 # Visualize classification results for the UMAP dataset with K-NN
-plot_decision_boundary_umap(X_train_umap, y_train_umap, best_knn_classifier_umap,
+plot_decision_boundary_umap(X_train_umap, y_train_encoded_umap, best_knn_classifier_umap,
                             'Apmokymo duomenų pasiskirstymas su dvimate dimensija', umap_classification_data)
-plot_decision_boundary_umap(X_test_umap, y_test_pred_umap, best_knn_classifier_umap,
+plot_decision_boundary_umap(X_test_umap, y_test_encoded_umap, best_knn_classifier_umap,
                             'Klasifikatoriaus nuspėtų reikšmių iš testavimo duomenų pasiskirstymas su dvimate dimensija', umap_test_data)
