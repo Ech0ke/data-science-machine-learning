@@ -324,8 +324,8 @@ def plot_decision_boundary(X, y, classifier, title, entity_df):
                                  text=hover_text))
 
     # Update layout with labels and title
-    fig.update_layout(title=title, xaxis_title='UMAP Component 1',
-                      yaxis_title='UMAP Component 2')
+    fig.update_layout(title=title, xaxis_title='x ašis',
+                      yaxis_title='y ašis')
 
     fig.show()
 
@@ -374,10 +374,24 @@ def plot_decision_boundary_umap(X, y, classifier, title, entity_df):
                                  text=hover_text))
 
     # Update layout with labels and title
-    fig.update_layout(title=title, xaxis_title='UMAP Component 1',
-                      yaxis_title='UMAP Component 2')
+    fig.update_layout(title=title, xaxis_title='x ašis',
+                      yaxis_title='y ašis')
 
     fig.show()
+
+
+def holdout_strategy(X, y, holdout_classifier, title):
+    X_train, X_val, y_train, y_val = train_test_split(
+        X, y, test_size=0.225, random_state=42)
+    holdout_classifier.fit(X_train, y_train)
+    y_pred = holdout_classifier.predict(X_val)
+
+    accuracy = accuracy_score(y_val, y_pred)
+    report = classification_report(y_val, y_pred)
+    print("Holdout strategy")
+    print("------------------------------------------------")
+    print(f"Accuracy on {title}: {accuracy}")
+    print(f"Classification Report on {title}:\n", report)
 
 
 # Plot decision boundary for train and test data
@@ -390,7 +404,11 @@ plot_decision_boundary_umap(X_train_umap, y_train_encoded_umap, best_classifier_
                             'Apmokymo duomenų pasiskirstymas su dvimate dimensija', umap_classification_data)
 plot_decision_boundary_umap(X_test_umap, y_test_encoded_umap, best_classifier_umap,
                             'Klasifikatoriaus nuspėtų reikšmių iš testavimo duomenų pasiskirstymas su dvimate dimensija', umap_test_data)
-
+holdout_classifier = GaussianNB()
+holdout_strategy(X_train, y_train, holdout_classifier,
+                 "naive bayes normalized data")
+holdout_strategy(X_train_umap, y_train_umap,
+                 holdout_classifier, "naive bayes UMAP reduced data")
 
 # Confusion matrixes
 conf_matrix = confusion_matrix(y_test, y_test_pred)
@@ -400,7 +418,7 @@ conf_matrix_umap = confusion_matrix(y_test_umap, y_test_pred_umap)
 print("Confusion Matrix on normalized umap:\n", conf_matrix_umap)
 
 
-## Decision tree
+# Decision tree
 
 def print_measurements_results(decision_tree, label, x, y):
     predictions = decision_tree.predict(x)
@@ -416,23 +434,32 @@ def print_measurements_results(decision_tree, label, x, y):
     print(f"F1 on test data for {label}: {test_f1}")
     print("\n")
 
+
 def decision_tree_results(criterion="gini", max_depth=4):
-    decision_tree = DecisionTreeClassifier(random_state=42, criterion=criterion, max_depth=max_depth)
+    decision_tree = DecisionTreeClassifier(
+        random_state=42, criterion=criterion, max_depth=max_depth)
     decision_tree.fit(X_train, y_train)
     print_measurements_results(decision_tree, "decision tree", X_test, y_test)
-    fig = plt.figure(figsize=(25,20))
-    _ = plot_tree(decision_tree, feature_names=feature_columns, class_names={0: "Electricity < 90", 1: "Electricity >= 90"}, filled=True, fontsize=12)
+    fig = plt.figure(figsize=(25, 20))
+    _ = plot_tree(decision_tree, feature_names=feature_columns, class_names={
+                  0: "Electricity < 90", 1: "Electricity >= 90"}, filled=True, fontsize=12)
     plt.title("Sprendimų medis su normuota duomenų aibe ir be parametrų")
     plt.show()
 
+
 def decision_tree_umap_results():
-    decision_tree = DecisionTreeClassifier(random_state=42, criterion="entropy", max_depth=4)
+    decision_tree = DecisionTreeClassifier(
+        random_state=42, criterion="entropy", max_depth=4)
     decision_tree.fit(X_train_umap, y_train_umap)
-    print_measurements_results(decision_tree, "decision tree", X_test_umap, y_test_umap)
-    fig = plt.figure(figsize=(25,20))
-    _ = plot_tree(decision_tree, feature_names=feature_columns_umap, class_names={0: "Electricity < 90", 1: "Electricity >= 90"}, filled=True, fontsize=12)
-    plt.title("Sprendimų medis su dimensijos mažinta aibe ir parametrais (criterion=entropy, max_depth=4)")
+    print_measurements_results(
+        decision_tree, "decision tree", X_test_umap, y_test_umap)
+    fig = plt.figure(figsize=(25, 20))
+    _ = plot_tree(decision_tree, feature_names=feature_columns_umap, class_names={
+                  0: "Electricity < 90", 1: "Electricity >= 90"}, filled=True, fontsize=12)
+    plt.title(
+        "Sprendimų medis su dimensijos mažinta aibe ir parametrais (criterion=entropy, max_depth=4)")
     plt.show()
+
 
 def decision_tree_best_results():
     decision_tree = DecisionTreeClassifier(random_state=42)
@@ -441,28 +468,34 @@ def decision_tree_best_results():
         "random_state": [10, 42, 70, 100],
         'criterion': ['entropy', 'gini'],
     }
-    grid_search = GridSearchCV(decision_tree, param_grid, cv=5, scoring='accuracy')
+    grid_search = GridSearchCV(
+        decision_tree, param_grid, cv=5, scoring='accuracy')
     grid_search.fit(X_train, y_train)
     best_params = grid_search.best_params_
     best_estimator = grid_search.best_estimator_
     print_measurements_results(best_estimator, "decision tree", X_test, y_test)
-    fig = plt.figure(figsize=(25,20))
-    _ = plot_tree(best_estimator, feature_names=feature_columns, class_names={0: "Electricity < 90", 1: "Electricity >= 90"}, filled=True, fontsize=12)
-    plt.title(f"Sprendimų medis su normuota duomenų aibe ir parametrais {best_params}")
+    fig = plt.figure(figsize=(25, 20))
+    _ = plot_tree(best_estimator, feature_names=feature_columns, class_names={
+                  0: "Electricity < 90", 1: "Electricity >= 90"}, filled=True, fontsize=12)
+    plt.title(
+        f"Sprendimų medis su normuota duomenų aibe ir parametrais {best_params}")
     plt.show()
+
 
 def decision_tree_params_test():
     train_accuracy = []
     validation_accuracy = []
     for depth in range(1, 10):
-        dt = DecisionTreeClassifier(max_depth=depth, random_state=42, criterion="entropy")
+        dt = DecisionTreeClassifier(
+            max_depth=depth, random_state=42, criterion="entropy")
         dt.fit(X_train_umap, y_train_umap)
         train_accuracy.append(dt.score(X_train_umap, y_train_umap))
         dt = DecisionTreeClassifier(max_depth=depth, random_state=42)
         dt.fit(X_train_umap, y_train_umap)
         validation_accuracy.append(dt.score(X_test_umap, y_test_umap))
 
-    frame = pd.DataFrame({"max_depth": range(1, 10), "train_acc": train_accuracy, "valid_acc": validation_accuracy})
+    frame = pd.DataFrame({"max_depth": range(
+        1, 10), "train_acc": train_accuracy, "valid_acc": validation_accuracy})
     plt.figure(figsize=(12, 6))
     plt.plot(frame["max_depth"], frame["train_acc"], marker="o")
     plt.plot(frame["max_depth"], frame["valid_acc"], marker="o")
@@ -471,12 +504,18 @@ def decision_tree_params_test():
     plt.legend(["entropy", "gini"])
     plt.show()
 
+
 decision_tree_params_test()
 decision_tree_results()
 decision_tree_umap_results()
 decision_tree_best_results()
+holdout_classifier = DecisionTreeClassifier(random_state=42)
+holdout_strategy(X_train, y_train, holdout_classifier,
+                 "decision tree normalized data")
+holdout_strategy(X_train_umap, y_train_umap,
+                 holdout_classifier, "decision tree UMAP reduced data")
 
-#K-nn starts here
+# K-nn starts here
 # Prepare data for the original dataset
 X_train = train_data[feature_columns]
 y_train = train_data['Label']
@@ -486,7 +525,8 @@ y_test = test_data['Label']
 
 # Define the hyperparameters you want to tune for k-NN
 param_grid = {
-    'n_neighbors': [3, 5, 7],  # Different values for the number of neighbors (k)
+    # Different values for the number of neighbors (k)
+    'n_neighbors': [3, 5, 7],
     'weights': ['uniform', 'distance'],  # Weighting strategy
     'metric': ['euclidean', 'manhattan'],  # Distance metric
 }
@@ -495,7 +535,8 @@ param_grid = {
 knn_classifier = KNeighborsClassifier()
 
 # Perform grid search with cross-validation
-grid_search = GridSearchCV(knn_classifier, param_grid, cv=5)  # 5-fold cross-validation
+grid_search = GridSearchCV(knn_classifier, param_grid,
+                           cv=5)  # 5-fold cross-validation
 grid_search.fit(X_train, y_train)
 
 # Get the best parameters found by grid search
@@ -512,11 +553,14 @@ print(f"Accuracy on test data: {test_accuracy}")
 print("Classification Report on test data:\n", test_classification_rep)
 
 # Prepare data for the umap dataset
-umap_classification_data['Label'] = (umap_classification_data[TARGET_COLUMN] >= THRESHOLD)
-umap_classification_data = umap_classification_data.drop(columns=['Access to electricity (% of population)', 'Entity'], axis=1)
+umap_classification_data['Label'] = (
+    umap_classification_data[TARGET_COLUMN] >= THRESHOLD)
+umap_classification_data = umap_classification_data.drop(
+    columns=['Access to electricity (% of population)', 'Entity'], axis=1)
 
 umap_test_data['Label'] = (umap_test_data[TARGET_COLUMN] >= THRESHOLD)
-umap_test_data = umap_test_data.drop(columns=['Access to electricity (% of population)', 'Entity'], axis=1)
+umap_test_data = umap_test_data.drop(
+    columns=['Access to electricity (% of population)', 'Entity'], axis=1)
 
 y_train_umap = umap_classification_data['Label']
 X_train_umap = umap_classification_data.drop(columns=['Label'])
@@ -525,7 +569,8 @@ y_test_umap = umap_test_data['Label']
 X_test_umap = umap_test_data.drop(columns=['Label'])
 
 # Perform grid search with cross-validation for umap dataset
-grid_search_umap = GridSearchCV(knn_classifier, param_grid, cv=5)  # 5-fold cross-validation
+grid_search_umap = GridSearchCV(
+    knn_classifier, param_grid, cv=5)  # 5-fold cross-validation
 grid_search_umap.fit(X_train_umap, y_train_umap)
 
 # Get the best parameters found by grid search for umap dataset
@@ -535,11 +580,14 @@ best_knn_classifier_umap = grid_search_umap.best_estimator_
 # Use the best k-NN classifier for final evaluation on test data for umap dataset
 y_test_pred_umap = best_knn_classifier_umap.predict(X_test_umap)
 test_accuracy_umap = accuracy_score(y_test_umap, y_test_pred_umap)
-test_classification_rep_umap = classification_report(y_test_umap, y_test_pred_umap)
+test_classification_rep_umap = classification_report(
+    y_test_umap, y_test_pred_umap)
 
-print(f"Best parameters found by grid search for umap dataset: {best_params_umap}")
+print(
+    f"Best parameters found by grid search for umap dataset: {best_params_umap}")
 print(f"Accuracy on test data for umap dataset: {test_accuracy_umap}")
-print("Classification Report on test data for umap dataset:\n", test_classification_rep_umap)
+print("Classification Report on test data for umap dataset:\n",
+      test_classification_rep_umap)
 
 
 # Calculate evaluation metrics for the original dataset
