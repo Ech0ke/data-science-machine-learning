@@ -14,6 +14,7 @@ from matplotlib import pyplot as plt
 import plotly.graph_objects as go
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+from scipy import stats
 
 # Set the locale to use thousands separators
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
@@ -394,6 +395,17 @@ def holdout_strategy(X, y, holdout_classifier, title):
     print(f"Classification Report on {title}:\n", report)
 
 
+def evaluate_model(predictions, title):
+    dispersion = np.std(predictions)
+    variance = np.var(predictions)
+    confidence_interval = stats.t.interval(0.95, len(
+        predictions)-1, loc=np.mean(predictions), scale=stats.sem(predictions))
+
+    print(f'Dispersion for {title}: {dispersion}')
+    print(f'Confidence interval for {title}: {confidence_interval}')
+    print(f'Variance for {title}: {variance}')
+
+
 # Plot decision boundary for train and test data
 plot_decision_boundary(X_train, y_train_encoded, best_classifier,
                        'Apmokymo duomenų pasiskirstymas su normuota duomenų aibe', train_data)
@@ -409,6 +421,10 @@ holdout_strategy(X_train, y_train, holdout_classifier,
                  "naive bayes normalized data")
 holdout_strategy(X_train_umap, y_train_umap,
                  holdout_classifier, "naive bayes UMAP reduced data")
+# pass y_pred from cross-validation or holdout whichever average metrics are better
+evaluate_model(y_test_pred, "predicted data naive bayes normalized data")
+evaluate_model(y_test_pred_umap,
+               "predicted data naive bayes UMAP reduced data")
 
 # Confusion matrixes
 conf_matrix = confusion_matrix(y_test, y_test_pred)
@@ -433,6 +449,7 @@ def print_measurements_results(decision_tree, label, x, y):
     print(f"Recall on test data for {label}: {test_recall}")
     print(f"F1 on test data for {label}: {test_f1}")
     print("\n")
+    evaluate_model(predictions, label)
 
 
 def decision_tree_results(criterion="gini", max_depth=4):
