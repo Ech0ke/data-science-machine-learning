@@ -3,17 +3,14 @@ import plotly.express as px
 import locale
 import umap
 import numpy as np
-from sklearn.metrics import silhouette_score as ss
-from sklearn.model_selection import GridSearchCV
 from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import GridSearchCV, train_test_split
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, precision_score, recall_score, f1_score, roc_curve, roc_auc_score
 from sklearn.tree import DecisionTreeClassifier, plot_tree
 from matplotlib import pyplot as plt
 import plotly.graph_objects as go
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 from scipy import stats
 
 # Set the locale to use thousands separators
@@ -230,6 +227,7 @@ best_classifier = grid_search.best_estimator_
 y_test_pred = best_classifier.predict(X_test)
 test_accuracy = accuracy_score(y_test, y_test_pred)
 test_classification_rep = classification_report(y_test, y_test_pred)
+y_test_pred_naive = y_test_pred.copy()
 
 print(f"Accuracy on test data: {test_accuracy}")
 print("Classification Report on test data:\n", test_classification_rep)
@@ -264,6 +262,7 @@ y_test_pred_umap = best_classifier_umap.predict(X_test_umap)
 test_accuracy_umap = accuracy_score(y_test_umap, y_test_pred_umap)
 test_classification_rep_umap = classification_report(
     y_test_umap, y_test_pred_umap)
+y_test_pred_naive_umap = y_test_pred_umap.copy()
 
 print(f"Accuracy on test data umap: {test_accuracy_umap}")
 print("Classification Report on test data for umap:\n",
@@ -436,8 +435,16 @@ print("Confusion Matrix on normalized umap:\n", conf_matrix_umap)
 
 # Decision tree
 
+y_test_pred_dt = ""
+y_test_pred_dt_umap = ""
 def print_measurements_results(decision_tree, label, x, y):
     predictions = decision_tree.predict(x)
+    if "UMAP" in label:
+        global y_test_pred_dt_umap
+        y_test_pred_dt_umap = predictions
+    else:
+        global y_test_pred_dt
+        y_test_pred_dt = predictions
     test_confusion_matrix = confusion_matrix(y, predictions)
     test_accuracy = accuracy_score(y, predictions)
     test_precision = precision_score(y, predictions)
@@ -469,7 +476,7 @@ def decision_tree_umap_results():
         random_state=42, criterion="entropy", max_depth=4)
     decision_tree.fit(X_train_umap, y_train_umap)
     print_measurements_results(
-        decision_tree, "decision tree", X_test_umap, y_test_umap)
+        decision_tree, "decision tree UMAP", X_test_umap, y_test_umap)
     fig = plt.figure(figsize=(25, 20))
     _ = plot_tree(decision_tree, feature_names=feature_columns_umap, class_names={
                   0: "Electricity < 90", 1: "Electricity >= 90"}, filled=True, fontsize=12)
@@ -599,6 +606,7 @@ best_classifier = grid_search.best_estimator_
 y_test_pred = best_classifier.predict(X_test)
 test_accuracy = accuracy_score(y_test, y_test_pred)
 test_classification_rep = classification_report(y_test, y_test_pred)
+y_test_pred_knn = y_test_pred.copy()
 
 print(f"Accuracy on test data: {test_accuracy}")
 print("Classification Report on test data:\n", test_classification_rep)
@@ -633,6 +641,7 @@ y_test_pred_umap = best_classifier_umap.predict(X_test_umap)
 test_accuracy_umap = accuracy_score(y_test_umap, y_test_pred_umap)
 test_classification_rep_umap = classification_report(
     y_test_umap, y_test_pred_umap)
+y_test_pred_knn_umap = y_test_pred_umap.copy()
 
 print(f"Accuracy on test data umap: {test_accuracy_umap}")
 print("Classification Report on test data for umap:\n",
@@ -674,3 +683,27 @@ print("Confusion Matrix on normalized:\n", conf_matrix)
 
 conf_matrix_umap = confusion_matrix(y_test_umap, y_test_pred_umap)
 print("Confusion Matrix on normalized umap:\n", conf_matrix_umap)
+
+
+# ROC curves
+fpr_model_dt, tpr_model_dt, _ = roc_curve(test_data['Label'], y_test_pred_dt)
+fpr_model_knn, tpr_model_knn, _ = roc_curve(test_data['Label'], y_test_pred_knn)
+fpr_model_naive, tpr_model_naive, _ = roc_curve(test_data['Label'], y_test_pred_naive)
+fpr_model_dt_umap, tpr_model_dt_umap, _ = roc_curve(umap_test_data['Label'], y_test_pred_dt_umap)
+fpr_model_knn_umap, tpr_model_knn_umap, _ = roc_curve(umap_test_data['Label'], y_test_pred_knn_umap)
+fpr_model_naive_umap, tpr_model_naive_umap, _ = roc_curve(umap_test_data['Label'], y_test_pred_naive_umap)
+
+# Plot ROC curve
+plt.figure(figsize=(8, 6))
+plt.plot(fpr_model_dt, tpr_model_dt, color='blue', lw=2, label='Sprendimų medis (AUC = %0.2f)' % roc_auc_score(test_data['Label'], y_test_pred_dt))
+plt.plot(fpr_model_knn, tpr_model_knn, color='red', lw=2, label='Knn (AUC = %0.2f)' % roc_auc_score(test_data['Label'], y_test_pred))
+plt.plot(fpr_model_naive, tpr_model_naive, color='green', lw=2, label='Naive Bayes (AUC = %0.2f)' % roc_auc_score(test_data['Label'], y_test_pred_naive))
+plt.plot(fpr_model_dt_umap, tpr_model_dt_umap, color='pink', lw=2, label='Sprendimų medis UMAP (AUC = %0.2f)' % roc_auc_score(umap_test_data['Label'], y_test_pred_dt_umap))
+plt.plot(fpr_model_knn_umap, tpr_model_knn_umap, color='black', lw=2, label='Knn UMAP (AUC = %0.2f)' % roc_auc_score(umap_test_data['Label'], y_test_pred_umap))
+plt.plot(fpr_model_naive_umap, tpr_model_naive_umap, color='yellow', lw=2, label='Naive Bayes UMAP (AUC = %0.2f)' % roc_auc_score(umap_test_data['Label'], y_test_pred_naive_umap))
+plt.plot([0, 1], [0, 1], color='gray', linestyle='--')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic (ROC) kreivės')
+plt.legend(loc='lower right')
+plt.show()
